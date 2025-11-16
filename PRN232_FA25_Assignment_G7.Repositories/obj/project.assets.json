@@ -4074,11 +4074,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Khoi Nguyen\\Desktop\\PRN232\\assignment\\PRN232_FA25_Assignment_G7\\PRN232_FA25_Assignment_G7.Repositories\\PRN232_FA25_Assignment_G7.Repositories.csproj",
+      "projectUniqueName": "C:\\Users\\Khoi Nguyen\\Desktop\\PRN232\\assignment\\PRN232-ASM\\PRN232_FA25_Assignment_G7.Repositories\\PRN232_FA25_Assignment_G7.Repositories.csproj",
       "projectName": "PRN232_FA25_Assignment_G7.Repositories",
-      "projectPath": "C:\\Users\\Khoi Nguyen\\Desktop\\PRN232\\assignment\\PRN232_FA25_Assignment_G7\\PRN232_FA25_Assignment_G7.Repositories\\PRN232_FA25_Assignment_G7.Repositories.csproj",
+      "projectPath": "C:\\Users\\Khoi Nguyen\\Desktop\\PRN232\\assignment\\PRN232-ASM\\PRN232_FA25_Assignment_G7.Repositories\\PRN232_FA25_Assignment_G7.Repositories.csproj",
       "packagesPath": "C:\\Users\\Khoi Nguyen\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Khoi Nguyen\\Desktop\\PRN232\\assignment\\PRN232_FA25_Assignment_G7\\PRN232_FA25_Assignment_G7.Repositories\\obj\\",
+      "outputPath": "C:\\Users\\Khoi Nguyen\\Desktop\\PRN232\\assignment\\PRN232-ASM\\PRN232_FA25_Assignment_G7.Repositories\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

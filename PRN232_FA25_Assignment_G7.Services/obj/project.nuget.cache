@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "w0K/h6dhIQM=",
+  "dgSpecHash": "HYJ5wgnf6e4=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Khoi Nguyen\\Desktop\\PRN232\\assignment\\PRN232_FA25_Assignment_G7\\PRN232_FA25_Assignment_G7.Services\\PRN232_FA25_Assignment_G7.Services.csproj",
+  "projectFilePath": "C:\\Users\\Khoi Nguyen\\Desktop\\PRN232\\assignment\\PRN232-ASM\\PRN232_FA25_Assignment_G7.Services\\PRN232_FA25_Assignment_G7.Services.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Khoi Nguyen\\.nuget\\packages\\automapper\\12.0.1\\automapper.12.0.1.nupkg.sha512",
     "C:\\Users\\Khoi Nguyen\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\12.0.1\\automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",
