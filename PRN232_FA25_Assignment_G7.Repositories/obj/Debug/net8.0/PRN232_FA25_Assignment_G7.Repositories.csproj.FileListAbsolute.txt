@@ -1,0 +1,15 @@
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\bin\Debug\net8.0\PRN232_FA25_Assignment_G7.Repositories.deps.json
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\bin\Debug\net8.0\PRN232_FA25_Assignment_G7.Repositories.runtimeconfig.json
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\bin\Debug\net8.0\PRN232_FA25_Assignment_G7.Repositories.dll
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\bin\Debug\net8.0\PRN232_FA25_Assignment_G7.Repositories.pdb
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\obj\Debug\net8.0\PRN232_FA25_Assignment_G7.Repositories.csproj.AssemblyReference.cache
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\obj\Debug\net8.0\PRN232_FA25_Assignment_G7.Repositories.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\obj\Debug\net8.0\PRN232_FA25_Assignment_G7.Repositories.AssemblyInfoInputs.cache
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\obj\Debug\net8.0\PRN232_FA25_Assignment_G7.Repositories.AssemblyInfo.cs
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\obj\Debug\net8.0\PRN232_FA25_Assignment_G7.Repositories.csproj.CoreCompileInputs.cache
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\obj\Debug\net8.0\PRN232_FA25_Assignment_G7.Repositories.dll
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\obj\Debug\net8.0\refint\PRN232_FA25_Assignment_G7.Repositories.dll
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\obj\Debug\net8.0\PRN232_FA25_Assignment_G7.Repositories.pdb
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\obj\Debug\net8.0\PRN232_FA25_Assignment_G7.Repositories.genruntimeconfig.cache
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\obj\Debug\net8.0\ref\PRN232_FA25_Assignment_G7.Repositories.dll
+C:\Users\Khoi Nguyen\Desktop\PRN232\assignment\PRN232_FA25_Assignment_G7\PRN232_FA25_Assignment_G7.Repositories\obj\Debug\net8.0\PRN232_FA25_Assignment_G7.Repositories.sourcelink.json

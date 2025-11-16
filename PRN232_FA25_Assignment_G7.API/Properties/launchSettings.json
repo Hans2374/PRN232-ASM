@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "PRN232_FA25_Assignment_G7.API": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:53776;http://localhost:53777"
+    }
+  }
+}
