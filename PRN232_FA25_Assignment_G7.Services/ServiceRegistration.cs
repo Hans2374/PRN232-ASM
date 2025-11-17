@@ -17,12 +17,15 @@ public static class ServiceRegistration
         services.AddScoped<ISubmissionService, SubmissionService>();
         services.AddScoped<IViolationService, ViolationService>();
         services.AddScoped<IExaminerService, ExaminerService>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserManagementService, UserManagementService>();
 
         // Register helpers
         services.AddScoped<DuplicateChecker>();
         services.AddScoped<ViolationDetector>();
         services.AddScoped<FileProcessingHelper>();
         services.AddScoped<WordImageExtractor>();
+        services.AddScoped<JwtTokenGenerator>();
 
         return services;
     }

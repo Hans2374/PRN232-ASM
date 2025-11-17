@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PRN232_FA25_Assignment_G7.Repositories.Interfaces;
+using PRN232_FA25_Assignment_G7.Repositories.Repositories;
 using PRN232_FA25_Assignment_G7.Repositories.Repositories.Interfaces;
 using PRN232_FA25_Assignment_G7.Repositories.Repositories.Implementations;
 
@@ -24,6 +26,7 @@ public static class RepositoryRegistration
         });
 
         services.AddScoped<ISubjectRepository, SubjectRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
         // register other repositories here as added
 
         return services;

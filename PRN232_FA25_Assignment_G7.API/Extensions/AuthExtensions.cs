@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using PRN232_FA25_Assignment_G7.API.Auth;
+using PRN232_FA25_Assignment_G7.Services.Configuration;
+using PRN232_FA25_Assignment_G7.Services.Helpers;
 using System.Text;
 
 namespace PRN232_FA25_Assignment_G7.API.Extensions;
@@ -29,7 +30,7 @@ public static class AuthExtensions
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = jwtSettings.Issuer,
                 ValidAudience = jwtSettings.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret))
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
             };
 
             // SignalR support
