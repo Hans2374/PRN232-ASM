@@ -1,0 +1,75 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Users.IndexModel
+@{
+    ViewData["Title"] = "User Management";
+}
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h3 style="color: #2d3748; margin: 0;">Users List</h3>
+    <a href="/Admin/Users/Create" class="btn btn-primary">+ Create New User</a>
+</div>
+
+@if (!Model.Users.Any())
+{
+    <div style="text-align: center; padding: 60px 20px; color: #718096;">
+        <div style="font-size: 48px; margin-bottom: 16px;">👥</div>
+        <p>No users found.</p>
+    </div>
+}
+else
+{
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                    <th style="text-align: center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Users)
+                {
+                    <tr>
+                        <td><strong>@user.Username</strong></td>
+                        <td>@user.FullName</td>
+                        <td>@user.Email</td>
+                        <td>
+                            <span class="badge" style="background: 
+                                @(user.Role == "Admin" ? "#c6f6d5; color: #22543d" :
+                                  user.Role == "Manager" ? "#bee3f8; color: #2c5282" :
+                                  user.Role == "Moderator" ? "#feebc8; color: #7c2d12" :
+                                  "#e9d8fd; color: #44337a")">
+                                @user.Role
+                            </span>
+                        </td>
+                        <td>
+                            @if (user.IsActive)
+                            {
+                                <span class="badge badge-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-danger">Inactive</span>
+                            }
+                        </td>
+                        <td>@user.CreatedAt.ToString("MMM dd, yyyy")</td>
+                        <td style="text-align: center;">
+                            <a href="/Admin/Users/Edit/@user.Id" class="btn btn-secondary" style="margin-right: 8px; padding: 6px 12px; font-size: 13px;">Edit</a>
+                            @if (user.IsActive)
+                            {
+                                <form method="post" style="display: inline;" asp-page-handler="Delete" asp-route-id="@user.Id" onsubmit="return confirm('Are you sure you want to deactivate this user?');">
+                                    <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;">Deactivate</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

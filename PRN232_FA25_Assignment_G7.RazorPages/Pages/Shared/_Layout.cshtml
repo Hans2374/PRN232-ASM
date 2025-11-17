@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Admin Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f7fafc;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: #2d3748;
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .sidebar-header h1 {
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-header p {
+            font-size: 12px;
+            color: #a0aec0;
+        }
+
+        .user-info {
+            padding: 20px;
+            background: #1a202c;
+            margin: 0 0 10px 0;
+        }
+
+        .user-info .name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .user-info .role {
+            font-size: 12px;
+            color: #a0aec0;
+            background: #4a5568;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 10px 0;
+        }
+
+        .nav-item {
+            margin: 4px 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #e2e8f0;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #4a5568;
+        }
+
+        .nav-link.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .nav-icon {
+            margin-right: 12px;
+            font-size: 18px;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 20px;
+        }
+
+        .top-bar {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-bar h2 {
+            color: #2d3748;
+            font-size: 24px;
+        }
+
+        .content-area {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #c53030;
+            border: 1px solid #fc8181;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f7fafc;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .badge-danger {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"],
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>📚 PRN232</h1>
+            <p>Assignment System</p>
+        </div>
+
+        <div class="user-info">
+            <div class="name">@User.FindFirst("FullName")?.Value</div>
+            <span class="role">@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</span>
+        </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString() == "/Admin/Index" ? "active" : "")" 
+                   asp-page="/Admin/Index">
+                    <span class="nav-icon">🏠</span>
+                    Dashboard
+                </a>
+            </li>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Admin/Users") == true ? "active" : "")" 
+                       asp-page="/Admin/Users/Index">
+                        <span class="nav-icon">👥</span>
+                        User Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Admin/Subjects") == true ? "active" : "")" 
+                       asp-page="/Admin/Subjects/Index">
+                        <span class="nav-icon">📚</span>
+                        Subject Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Admin/Semesters") == true ? "active" : "")" 
+                       asp-page="/Admin/Semesters/Index">
+                        <span class="nav-icon">📅</span>
+                        Semester Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Admin/Exams") == true ? "active" : "")" 
+                       asp-page="/Admin/Exams/Index">
+                        <span class="nav-icon">📝</span>
+                        Exam Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Admin/Reports") == true ? "active" : "")" 
+                       asp-page="/Admin/Reports/Index">
+                        <span class="nav-icon">📊</span>
+                        Summary Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Admin/Approvals") == true ? "active" : "")" 
+                       asp-page="/Admin/Approvals/Index">
+                        <span class="nav-icon">✅</span>
+                        Approve Results
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Admin/Violations") == true ? "active" : "")" 
+                       asp-page="/Admin/Violations/Index">
+                        <span class="nav-icon">⚠️</span>
+                        Violations
+                    </a>
+                </li>
+            }
+
+            @if (User.IsInRole("Manager"))
+            {
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Manager/Exams") == true ? "active" : "")" 
+                       asp-page="/Manager/Exams/Index">
+                        <span class="nav-icon">📝</span>
+                        Exam Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Manager/Reports") == true ? "active" : "")" 
+                       asp-page="/Manager/Reports/Index">
+                        <span class="nav-icon">📊</span>
+                        Reports
+                    </a>
+                </li>
+            }
+
+            <li class="nav-item">
+                <a class="nav-link" asp-page="/Account/Logout">
+                    <span class="nav-icon">🚪</span>
+                    Logout
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <h2>@ViewData["Title"]</h2>
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">
+                @TempData["Success"]
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-error">
+                @TempData["Error"]
+            </div>
+        }
+
+        @if (TempData["AuthError"] != null)
+        {
+            <div class="alert alert-error">
+                @TempData["AuthError"]
+            </div>
+        }
+
+        <div class="content-area">
+            @RenderBody()
+        </div>
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,70 @@
+@page "{id:guid}"
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Users.EditModel
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<div style="margin-bottom: 24px;">
+    <h3 style="color: #2d3748; margin-bottom: 8px;">Edit User: @Model.CurrentUsername</h3>
+    <p style="color: #718096;">Update user information and permissions.</p>
+</div>
+
+@if (Model.User == null)
+{
+    <div class="alert alert-error">
+        User not found.
+    </div>
+    <a href="/Admin/Users/Index" class="btn btn-secondary">Back to Users</a>
+}
+else
+{
+    <form method="post" style="max-width: 600px;">
+        <div asp-validation-summary="ModelOnly" class="alert alert-error"></div>
+
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" value="@Model.User.Username" disabled style="background: #f7fafc; cursor: not-allowed;" />
+            <small style="color: #718096; font-size: 12px;">Username cannot be changed</small>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="UpdateRequest.FullName">Full Name</label>
+            <input asp-for="UpdateRequest.FullName" type="text" placeholder="Enter full name" />
+            <span asp-validation-for="UpdateRequest.FullName" style="color: #c53030; font-size: 12px;"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="UpdateRequest.Email">Email</label>
+            <input asp-for="UpdateRequest.Email" type="email" placeholder="Enter email address" />
+            <span asp-validation-for="UpdateRequest.Email" style="color: #c53030; font-size: 12px;"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="UpdateRequest.Role">Role</label>
+            <select asp-for="UpdateRequest.Role">
+                <option value="Admin">Admin - Full system access</option>
+                <option value="Manager">Manager - Limited access</option>
+                <option value="Moderator">Moderator - Exam oversight</option>
+                <option value="Examiner">Examiner - Grading only</option>
+            </select>
+            <span asp-validation-for="UpdateRequest.Role" style="color: #c53030; font-size: 12px;"></span>
+        </div>
+
+        <div class="form-group">
+            <div class="checkbox-group">
+                <input asp-for="UpdateRequest.IsActive" type="checkbox" id="isActive" />
+                <label for="isActive" style="margin: 0;">Active User</label>
+            </div>
+            <small style="color: #718096; font-size: 12px;">Inactive users cannot log in</small>
+        </div>
+
+        <div style="margin-top: 30px; display: flex; gap: 12px;">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a href="/Admin/Users/Index" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

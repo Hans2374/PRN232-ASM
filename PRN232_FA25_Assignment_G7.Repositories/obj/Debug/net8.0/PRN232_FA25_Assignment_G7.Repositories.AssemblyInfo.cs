@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PRN232_FA25_Assignment_G7.Repositories")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8b5ba7cef4f64516b612879e4aec191da948ad70")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e9072d6b76e9a208ac7bff041d331069710644c7")]
 [assembly: System.Reflection.AssemblyProductAttribute("PRN232_FA25_Assignment_G7.Repositories")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PRN232_FA25_Assignment_G7.Repositories")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
