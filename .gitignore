@@ -104,6 +104,12 @@ StyleCopReport.xml
 *.svclog
 *.scc
 
+# Ignore build artifacts
+bin/
+obj/
+**/bin/
+**/obj/
+
 # Chutzpah Test files
 _Chutzpah*
 
