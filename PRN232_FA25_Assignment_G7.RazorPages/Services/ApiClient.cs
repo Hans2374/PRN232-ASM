@@ -32,22 +32,28 @@ public class ApiClient
     }
 
     /// <summary>
-    /// Attach JWT token to Authorization header if available
+    /// Create a HttpRequestMessage and attach Authorization header for this request only
     /// </summary>
-    private void SetAuthorizationHeader()
+    private HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, HttpContent? content = null)
     {
+        var request = new HttpRequestMessage(method, endpoint);
+
         var token = _authSession.GetToken();
         if (!string.IsNullOrEmpty(token))
         {
-            _httpClient.DefaultRequestHeaders.Authorization = 
-                new AuthenticationHeaderValue("Bearer", token);
-            _logger.LogDebug("JWT token attached to request (length: {Length})", token.Length);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            _logger.LogInformation("Auth header present for {Method} {Endpoint}: Yes", method, endpoint);
         }
         else
         {
-            _httpClient.DefaultRequestHeaders.Authorization = null;
-            _logger.LogWarning("No JWT token available - API request will fail if authentication required");
+            _logger.LogWarning("Auth header present for {Method} {Endpoint}: No (token missing)", method, endpoint);
         }
+
+        if (content != null)
+        {
+            request.Content = content;
+        }
+        return request;
     }
 
     /// <summary>
@@ -55,12 +61,11 @@ public class ApiClient
     /// </summary>
     public async Task<TResponse?> PostAsync<TRequest, TResponse>(string endpoint, TRequest request)
     {
-        SetAuthorizationHeader();
-        
         var json = JsonSerializer.Serialize(request, _jsonOptions);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync(endpoint, content);
+        var httpRequest = CreateRequest(HttpMethod.Post, endpoint, content);
+        var response = await _httpClient.SendAsync(httpRequest);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -78,13 +83,10 @@ public class ApiClient
     /// </summary>
     public async Task<T?> GetAsync<T>(string endpoint)
     {
-        SetAuthorizationHeader();
-        
         var fullUrl = new Uri(_httpClient.BaseAddress!, endpoint);
         _logger.LogInformation("GET Request to: {Url}", fullUrl);
-        _logger.LogDebug("Authorization Header: {HasAuth}", _httpClient.DefaultRequestHeaders.Authorization != null ? "Present" : "Missing");
-
-        var response = await _httpClient.GetAsync(endpoint);
+        var httpRequest = CreateRequest(HttpMethod.Get, endpoint);
+        var response = await _httpClient.SendAsync(httpRequest);
         
         _logger.LogInformation("GET {Endpoint} - Status: {StatusCode}", endpoint, response.StatusCode);
 
@@ -124,12 +126,10 @@ public class ApiClient
     /// </summary>
     public async Task<TResponse?> PutAsync<TRequest, TResponse>(string endpoint, TRequest request)
     {
-        SetAuthorizationHeader();
-
         var json = JsonSerializer.Serialize(request, _jsonOptions);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        var response = await _httpClient.PutAsync(endpoint, content);
+        var httpRequest = CreateRequest(HttpMethod.Put, endpoint, content);
+        var response = await _httpClient.SendAsync(httpRequest);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -147,9 +147,8 @@ public class ApiClient
     /// </summary>
     public async Task<bool> DeleteAsync(string endpoint)
     {
-        SetAuthorizationHeader();
-
-        var response = await _httpClient.DeleteAsync(endpoint);
+        var httpRequest = CreateRequest(HttpMethod.Delete, endpoint);
+        var response = await _httpClient.SendAsync(httpRequest);
 
         return response.IsSuccessStatusCode;
     }

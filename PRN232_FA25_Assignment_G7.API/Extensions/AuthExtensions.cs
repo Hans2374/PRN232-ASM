@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using PRN232_FA25_Assignment_G7.Services.Configuration;
 using PRN232_FA25_Assignment_G7.Services.Helpers;
@@ -30,7 +31,8 @@ public static class AuthExtensions
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = jwtSettings.Issuer,
                 ValidAudience = jwtSettings.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
+                RoleClaimType = ClaimTypes.Role
             };
 
             // SignalR support
@@ -44,6 +46,31 @@ public static class AuthExtensions
                     {
                         context.Token = accessToken;
                     }
+                    return Task.CompletedTask;
+                },
+                OnTokenValidated = context =>
+                {
+                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
+                        .CreateLogger("JWT.Validation");
+                    var principal = context.Principal;
+                    var sub = principal?.FindFirst("sub")?.Value;
+                    var role = principal?.FindFirst(ClaimTypes.Role)?.Value;
+                    var issuer = principal?.FindFirst("iss")?.Value; // may be null if not present as claim
+                    logger.LogInformation("JWT validated. Subject={Sub}, Role={Role}, Issuer={Issuer}", sub, role, issuer);
+                    return Task.CompletedTask;
+                },
+                OnAuthenticationFailed = context =>
+                {
+                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
+                        .CreateLogger("JWT.AuthFailed");
+                    logger.LogWarning(context.Exception, "JWT authentication failed: {Message}", context.Exception.Message);
+                    return Task.CompletedTask;
+                },
+                OnChallenge = context =>
+                {
+                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
+                        .CreateLogger("JWT.Challenge");
+                    logger.LogWarning("JWT challenge triggered. Error={Error}, Description={Description}", context.Error, context.ErrorDescription);
                     return Task.CompletedTask;
                 }
             };
