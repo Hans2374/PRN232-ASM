@@ -1,0 +1,42 @@
+@page "{id:guid}"
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Semesters.EditModel
+@{
+    ViewData["Title"] = "Edit Semester";
+}
+
+<div style="margin-bottom: 20px;">
+    <a asp-page="Index" class="btn btn-secondary">← Back to Semesters</a>
+</div>
+
+<h3 style="color: #2d3748; margin-bottom: 24px;">Edit Semester</h3>
+
+<form method="post" style="max-width: 600px;">
+    <div asp-validation-summary="ModelOnly" class="alert alert-error" style="margin-bottom: 20px;"></div>
+
+    <div class="form-group">
+        <label asp-for="SemesterInput.Name">Semester Name</label>
+        <input asp-for="SemesterInput.Name" type="text" />
+        <span asp-validation-for="SemesterInput.Name" style="color: #e53e3e; font-size: 12px;"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="SemesterInput.StartDate">Start Date</label>
+        <input asp-for="SemesterInput.StartDate" type="date" />
+        <span asp-validation-for="SemesterInput.StartDate" style="color: #e53e3e; font-size: 12px;"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="SemesterInput.EndDate">End Date</label>
+        <input asp-for="SemesterInput.EndDate" type="date" />
+        <span asp-validation-for="SemesterInput.EndDate" style="color: #e53e3e; font-size: 12px;"></span>
+    </div>
+
+    <div style="display: flex; gap: 10px; margin-top: 24px;">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a asp-page="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

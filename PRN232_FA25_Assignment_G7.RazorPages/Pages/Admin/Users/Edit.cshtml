@@ -5,62 +5,80 @@
 }
 
 <div style="margin-bottom: 24px;">
-    <h3 style="color: #2d3748; margin-bottom: 8px;">Edit User: @Model.CurrentUsername</h3>
-    <p style="color: #718096;">Update user information and permissions.</p>
+    <h3 style="color: #2d3748; margin-bottom: 8px; font-size: 24px; font-weight: 600;">Edit User: @Model.CurrentUsername</h3>
+    <p style="color: #718096;">Update user information and permissions. Username cannot be changed.</p>
 </div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-error" style="margin-bottom: 20px;">
+        @TempData["Error"]
+    </div>
+}
 
 @if (Model.User == null)
 {
-    <div class="alert alert-error">
-        User not found.
+    <div class="alert alert-error" style="margin-bottom: 20px;">
+        <strong>User not found.</strong> The user may have been deleted or the ID is invalid.
     </div>
-    <a href="/Admin/Users/Index" class="btn btn-secondary">Back to Users</a>
+    <a href="/Admin/Users/Index" class="btn btn-secondary" 
+       style="padding: 10px 24px; background-color: #718096; color: white; border: none; border-radius: 4px; font-weight: 500; text-decoration: none; display: inline-block;">
+        Back to Users
+    </a>
 }
 else
 {
     <form method="post" style="max-width: 600px;">
-        <div asp-validation-summary="ModelOnly" class="alert alert-error"></div>
+        <div asp-validation-summary="ModelOnly" class="alert alert-error" style="margin-bottom: 20px;"></div>
 
-        <div class="form-group">
-            <label>Username</label>
-            <input type="text" value="@Model.User.Username" disabled style="background: #f7fafc; cursor: not-allowed;" />
-            <small style="color: #718096; font-size: 12px;">Username cannot be changed</small>
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #2d3748;">Username</label>
+            <input type="text" value="@Model.User.Username" disabled 
+                   style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 14px; background: #f7fafc; cursor: not-allowed; color: #718096;" />
+            <small style="color: #718096; font-size: 12px; display: block; margin-top: 4px;">Username cannot be changed after account creation</small>
         </div>
 
-        <div class="form-group">
-            <label asp-for="UpdateRequest.FullName">Full Name</label>
-            <input asp-for="UpdateRequest.FullName" type="text" placeholder="Enter full name" />
-            <span asp-validation-for="UpdateRequest.FullName" style="color: #c53030; font-size: 12px;"></span>
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label asp-for="UpdateRequest.FullName" style="display: block; margin-bottom: 6px; font-weight: 500; color: #2d3748;">Full Name *</label>
+            <input asp-for="UpdateRequest.FullName" type="text" placeholder="Enter full name" 
+                   style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 14px;" />
+            <span asp-validation-for="UpdateRequest.FullName" style="color: #c53030; font-size: 12px; display: block; margin-top: 4px;"></span>
         </div>
 
-        <div class="form-group">
-            <label asp-for="UpdateRequest.Email">Email</label>
-            <input asp-for="UpdateRequest.Email" type="email" placeholder="Enter email address" />
-            <span asp-validation-for="UpdateRequest.Email" style="color: #c53030; font-size: 12px;"></span>
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label asp-for="UpdateRequest.Email" style="display: block; margin-bottom: 6px; font-weight: 500; color: #2d3748;">Email Address *</label>
+            <input asp-for="UpdateRequest.Email" type="email" placeholder="user@example.com" 
+                   style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 14px;" />
+            <span asp-validation-for="UpdateRequest.Email" style="color: #c53030; font-size: 12px; display: block; margin-top: 4px;"></span>
         </div>
 
-        <div class="form-group">
-            <label asp-for="UpdateRequest.Role">Role</label>
-            <select asp-for="UpdateRequest.Role">
-                <option value="Admin">Admin - Full system access</option>
-                <option value="Manager">Manager - Limited access</option>
-                <option value="Moderator">Moderator - Exam oversight</option>
-                <option value="Examiner">Examiner - Grading only</option>
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label asp-for="UpdateRequest.Role" style="display: block; margin-bottom: 6px; font-weight: 500; color: #2d3748;">Role *</label>
+            <select asp-for="UpdateRequest.Role" asp-items="Model.AvailableRoles"
+                    style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 14px; background-color: white;">
             </select>
-            <span asp-validation-for="UpdateRequest.Role" style="color: #c53030; font-size: 12px;"></span>
+            <span asp-validation-for="UpdateRequest.Role" style="color: #c53030; font-size: 12px; display: block; margin-top: 4px;"></span>
+            <small style="color: #718096; font-size: 12px; display: block; margin-top: 4px;">Select the appropriate role based on user responsibilities</small>
         </div>
 
-        <div class="form-group">
-            <div class="checkbox-group">
-                <input asp-for="UpdateRequest.IsActive" type="checkbox" id="isActive" />
-                <label for="isActive" style="margin: 0;">Active User</label>
+        <div class="form-group" style="margin-bottom: 20px;">
+            <div class="checkbox-group" style="display: flex; align-items: center; gap: 8px;">
+                <input asp-for="UpdateRequest.IsActive" type="checkbox" id="isActive" 
+                       style="width: 18px; height: 18px; cursor: pointer;" />
+                <label for="isActive" style="margin: 0; font-weight: 500; color: #2d3748; cursor: pointer;">Active User</label>
             </div>
-            <small style="color: #718096; font-size: 12px;">Inactive users cannot log in</small>
+            <small style="color: #718096; font-size: 12px; display: block; margin-top: 4px; margin-left: 26px;">Uncheck to deactivate the user account (user will not be able to log in)</small>
         </div>
 
-        <div style="margin-top: 30px; display: flex; gap: 12px;">
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-            <a href="/Admin/Users/Index" class="btn btn-secondary">Cancel</a>
+        <div style="margin-top: 30px; display: flex; gap: 12px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <button type="submit" class="btn btn-primary" 
+                    style="padding: 10px 24px; background-color: #3182ce; color: white; border: none; border-radius: 4px; font-weight: 500; cursor: pointer;">
+                Save Changes
+            </button>
+            <a href="/Admin/Users/Index" class="btn btn-secondary" 
+               style="padding: 10px 24px; background-color: #718096; color: white; border: none; border-radius: 4px; font-weight: 500; text-decoration: none; display: inline-block;">
+                Cancel
+            </a>
         </div>
     </form>
 }
@@ -68,3 +86,4 @@ else
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
+

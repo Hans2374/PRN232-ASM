@@ -1,0 +1,36 @@
+@page "{id:guid}"
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Subjects.EditModel
+@{
+    ViewData["Title"] = "Edit Subject";
+}
+
+<div style="margin-bottom: 20px;">
+    <a asp-page="Index" class="btn btn-secondary">← Back to Subjects</a>
+</div>
+
+<h3 style="color: #2d3748; margin-bottom: 24px;">Edit Subject</h3>
+
+<form method="post" style="max-width: 600px;">
+    <div asp-validation-summary="ModelOnly" class="alert alert-error" style="margin-bottom: 20px;"></div>
+
+    <div class="form-group">
+        <label asp-for="SubjectInput.Code">Subject Code</label>
+        <input asp-for="SubjectInput.Code" type="text" />
+        <span asp-validation-for="SubjectInput.Code" style="color: #e53e3e; font-size: 12px;"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="SubjectInput.Name">Subject Name</label>
+        <input asp-for="SubjectInput.Name" type="text" />
+        <span asp-validation-for="SubjectInput.Name" style="color: #e53e3e; font-size: 12px;"></span>
+    </div>
+
+    <div style="display: flex; gap: 10px; margin-top: 24px;">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a asp-page="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
