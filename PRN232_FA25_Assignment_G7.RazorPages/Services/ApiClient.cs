@@ -67,14 +67,13 @@ public class ApiClient
         var httpRequest = CreateRequest(HttpMethod.Post, endpoint, content);
         var response = await _httpClient.SendAsync(httpRequest);
 
+        var responseContent = await response.Content.ReadAsStringAsync();
         if (!response.IsSuccessStatusCode)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            throw new HttpRequestException(
-                $"POST {endpoint} failed with status {response.StatusCode}: {errorContent}");
+            // Surface a typed ApiException so callers can react to status codes (e.g., 409 Conflict)
+            throw new ApiException(response.StatusCode, responseContent);
         }
 
-        var responseContent = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<TResponse>(responseContent, _jsonOptions);
     }
 
@@ -87,8 +86,10 @@ public class ApiClient
         _logger.LogInformation("GET Request to: {Url}", fullUrl);
         var httpRequest = CreateRequest(HttpMethod.Get, endpoint);
         var response = await _httpClient.SendAsync(httpRequest);
-        
+
         _logger.LogInformation("GET {Endpoint} - Status: {StatusCode}", endpoint, response.StatusCode);
+
+        var responseContent = await response.Content.ReadAsStringAsync();
 
         if (!response.IsSuccessStatusCode)
         {
@@ -97,26 +98,23 @@ public class ApiClient
                 _logger.LogWarning("Resource not found: {Endpoint}", endpoint);
                 return default;
             }
-            
+
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {
                 _logger.LogError("Unauthorized access to {Endpoint} - JWT may be invalid or missing", endpoint);
                 throw new UnauthorizedAccessException($"Unauthorized access to {endpoint}. Please login again.");
             }
-            
+
             if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
             {
                 _logger.LogError("Forbidden access to {Endpoint} - User does not have required role", endpoint);
                 throw new UnauthorizedAccessException($"Access denied. You do not have permission to access this resource.");
             }
 
-            var errorContent = await response.Content.ReadAsStringAsync();
-            _logger.LogError("GET {Endpoint} failed: {StatusCode} - {Error}", endpoint, response.StatusCode, errorContent);
-            throw new HttpRequestException(
-                $"GET {endpoint} failed with status {response.StatusCode}: {errorContent}");
+            _logger.LogError("GET {Endpoint} failed: {StatusCode} - {Error}", endpoint, response.StatusCode, responseContent);
+            throw new ApiException(response.StatusCode, responseContent);
         }
 
-        var responseContent = await response.Content.ReadAsStringAsync();
         _logger.LogDebug("GET {Endpoint} - Response length: {Length} bytes", endpoint, responseContent.Length);
         return JsonSerializer.Deserialize<T>(responseContent, _jsonOptions);
     }
@@ -130,15 +128,13 @@ public class ApiClient
         var content = new StringContent(json, Encoding.UTF8, "application/json");
         var httpRequest = CreateRequest(HttpMethod.Put, endpoint, content);
         var response = await _httpClient.SendAsync(httpRequest);
+        var responseContent = await response.Content.ReadAsStringAsync();
 
         if (!response.IsSuccessStatusCode)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            throw new HttpRequestException(
-                $"PUT {endpoint} failed with status {response.StatusCode}: {errorContent}");
+            throw new ApiException(response.StatusCode, responseContent);
         }
 
-        var responseContent = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<TResponse>(responseContent, _jsonOptions);
     }
 
@@ -149,8 +145,13 @@ public class ApiClient
     {
         var httpRequest = CreateRequest(HttpMethod.Delete, endpoint);
         var response = await _httpClient.SendAsync(httpRequest);
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new ApiException(response.StatusCode, errorContent);
+        }
 
-        return response.IsSuccessStatusCode;
+        return true;
     }
 
     // ==================== Authentication Endpoints ====================

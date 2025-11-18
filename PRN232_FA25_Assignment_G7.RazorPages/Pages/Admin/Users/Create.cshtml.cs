@@ -52,7 +52,16 @@ public class CreateModel : PageModel
         try
         {
             _logger.LogInformation("Attempting to create user: {Username}", UserInput.Username);
-            
+            // Pre-check for duplicate username via API (includes inactive users)
+            var existing = await _apiClient.GetUsersAsync();
+            if (existing.Any(u => string.Equals(u.Username, UserInput.Username, StringComparison.OrdinalIgnoreCase)))
+            {
+                _logger.LogWarning("Username {Username} already exists (pre-check)", UserInput.Username);
+                ModelState.AddModelError("UserInput.Username", "This username is already taken. Please choose a different username.");
+                LoadRoles();
+                return Page();
+            }
+
             var result = await _apiClient.CreateUserAsync(UserInput);
 
             if (result != null)
@@ -68,14 +77,14 @@ public class CreateModel : PageModel
                 return Page();
             }
         }
-        catch (HttpRequestException ex) when (ex.Message.Contains("409") || ex.Message.Contains("Conflict"))
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
-            _logger.LogWarning("Username {Username} already exists", UserInput.Username);
+            _logger.LogWarning("Username {Username} already exists (API)", UserInput.Username);
             ModelState.AddModelError("UserInput.Username", "This username is already taken. Please choose a different username.");
             LoadRoles();
             return Page();
         }
-        catch (HttpRequestException ex) when (ex.Message.Contains("400") || ex.Message.Contains("BadRequest"))
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.BadRequest)
         {
             _logger.LogWarning(ex, "Bad request while creating user");
             TempData["Error"] = "Invalid user data. Please check all fields and try again.";
@@ -88,10 +97,10 @@ public class CreateModel : PageModel
             TempData["Error"] = "Your session has expired. Please login again.";
             return RedirectToPage("/Account/Login");
         }
-        catch (HttpRequestException ex)
+        catch (ApiException ex)
         {
-            _logger.LogError(ex, "Connection error while creating user");
-            TempData["Error"] = "Failed to connect to API. Please ensure the API is running.";
+            _logger.LogError(ex, "API error while creating user: {StatusCode}", ex.StatusCode);
+            TempData["Error"] = "Failed to create user due to API error. Please try again.";
             LoadRoles();
             return Page();
         }
