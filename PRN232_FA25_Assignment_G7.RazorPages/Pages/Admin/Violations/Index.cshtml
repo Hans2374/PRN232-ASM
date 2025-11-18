@@ -1,0 +1,86 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Violations.IndexModel
+@{
+    ViewData["Title"] = "Violations";
+}
+
+<h3 style="color: #2d3748; margin-bottom: 24px;">Violations Management</h3>
+
+@if (Model.FilterBySubmissionId.HasValue)
+{
+    <div style="background: #f7fafc; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+        <p style="margin: 0; color: #4a5568;">
+            Showing violations for submission: <strong>@Model.FilterBySubmissionId.Value</strong>
+            <a asp-page="Index" class="btn btn-secondary" style="padding: 4px 12px; margin-left: 12px;">View All</a>
+        </p>
+    </div>
+}
+
+@if (Model.Violations.Count == 0)
+{
+    <div style="text-align: center; padding: 40px; color: #718096;">
+        <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+        <p>No violations found.</p>
+    </div>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Student Code</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th style="width: 100px; text-align: center;">Severity</th>
+                <th style="width: 120px; text-align: center;">Zero Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var violation in Model.Violations)
+            {
+                <tr>
+                    <td><strong>@violation.StudentCode</strong></td>
+                    <td>@violation.Type</td>
+                    <td style="color: #718096;">@violation.Description</td>
+                    <td style="text-align: center;">
+                        @if (violation.Severity >= 4)
+                        {
+                            <span class="badge badge-danger">@violation.Severity</span>
+                        }
+                        else if (violation.Severity >= 2)
+                        {
+                            <span class="badge" style="background: #f59e0b; color: white;">@violation.Severity</span>
+                        }
+                        else
+                        {
+                            <span class="badge" style="background: #e2e8f0; color: #4a5568;">@violation.Severity</span>
+                        }
+                    </td>
+                    <td style="text-align: center;">
+                        @if (violation.IsZeroScore)
+                        {
+                            <span class="badge badge-danger">Yes</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-success">No</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div style="margin-top: 20px; color: #718096; font-size: 14px;">
+        Showing @Model.Violations.Count violation(s)
+    </div>
+}
+
+<div style="margin-top: 30px; background: #fff5e6; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+    <h4 style="color: #92400e; margin-bottom: 12px;">ℹ️ About Violations</h4>
+    <ul style="color: #92400e; line-height: 1.8; margin: 0;">
+        <li>Violations are automatically detected during submission processing</li>
+        <li>High severity violations (4-5) typically result in zero scores</li>
+        <li>Admins can review and override violation flags if needed</li>
+    </ul>
+</div>

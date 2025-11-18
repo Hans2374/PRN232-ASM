@@ -1,0 +1,68 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Semesters.IndexModel
+@{
+    ViewData["Title"] = "Semester Management";
+}
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h3 style="color: #2d3748; margin: 0;">Semesters</h3>
+    <a asp-page="Create" class="btn btn-primary">+ Create New Semester</a>
+</div>
+
+@if (Model.Semesters.Count == 0)
+{
+    <div style="text-align: center; padding: 40px; color: #718096;">
+        <div style="font-size: 48px; margin-bottom: 16px;">📅</div>
+        <p>No semesters found. Create your first semester to get started.</p>
+    </div>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Semester Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th style="width: 120px;">Status</th>
+                <th style="width: 150px; text-align: center;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var semester in Model.Semesters)
+            {
+                var now = DateTime.UtcNow;
+                var isActive = now >= semester.StartDate && now <= semester.EndDate;
+                var isPast = now > semester.EndDate;
+                var isFuture = now < semester.StartDate;
+                
+                <tr>
+                    <td><strong>@semester.Name</strong></td>
+                    <td>@semester.StartDate.ToString("MMM dd, yyyy")</td>
+                    <td>@semester.EndDate.ToString("MMM dd, yyyy")</td>
+                    <td>
+                        @if (isActive)
+                        {
+                            <span class="badge badge-success">Active</span>
+                        }
+                        else if (isPast)
+                        {
+                            <span class="badge" style="background: #e2e8f0; color: #4a5568;">Past</span>
+                        }
+                        else
+                        {
+                            <span class="badge" style="background: #bee3f8; color: #2c5282;">Upcoming</span>
+                        }
+                    </td>
+                    <td style="text-align: center;">
+                        <a asp-page="Edit" asp-route-id="@semester.Id" class="btn btn-secondary" style="padding: 6px 12px;">Edit</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div style="margin-top: 20px; color: #718096; font-size: 14px;">
+        Showing @Model.Semesters.Count semester(s)
+    </div>
+}

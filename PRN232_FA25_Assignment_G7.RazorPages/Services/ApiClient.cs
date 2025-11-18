@@ -282,4 +282,22 @@ public class ApiClient
     {
         return await DeleteAsync($"/api/admin/users/{id}");
     }
+
+    /// <summary>
+    /// Get raw HTTP response for streaming (e.g., file downloads)
+    /// </summary>
+    public async Task<HttpResponseMessage> GetRawAsync(string endpoint)
+    {
+        var httpRequest = CreateRequest(HttpMethod.Get, endpoint);
+        var response = await _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(
+                $"GET {endpoint} failed with status {response.StatusCode}: {errorContent}");
+        }
+
+        return response;
+    }
 }

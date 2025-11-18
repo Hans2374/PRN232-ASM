@@ -1,0 +1,81 @@
+@page "{id:guid}"
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Exams.DetailsModel
+@{
+    ViewData["Title"] = "Exam Details";
+}
+
+<div style="margin-bottom: 20px;">
+    <a asp-page="Index" class="btn btn-secondary">← Back to Exams</a>
+</div>
+
+@if (Model.Exam != null)
+{
+    <div style="background: white; padding: 30px; border-radius: 8px; margin-bottom: 20px;">
+        <h3 style="color: #2d3748; margin-bottom: 20px;">@Model.Exam.Name</h3>
+        
+        <div style="display: grid; grid-template-columns: 200px 1fr; gap: 16px; margin-bottom: 20px;">
+            <div style="font-weight: 600; color: #4a5568;">Subject:</div>
+            <div>@Model.Exam.Subject.Code - @Model.Exam.Subject.Name</div>
+
+            <div style="font-weight: 600; color: #4a5568;">Semester:</div>
+            <div>@Model.Exam.Semester.Name</div>
+
+            <div style="font-weight: 600; color: #4a5568;">Exam Date:</div>
+            <div>@Model.Exam.ExamDate.ToString("MMMM dd, yyyy")</div>
+
+            <div style="font-weight: 600; color: #4a5568;">Total Submissions:</div>
+            <div><span class="badge" style="background: #667eea; color: white;">@Model.Exam.TotalSubmissions</span></div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Exam.Description))
+            {
+                <div style="font-weight: 600; color: #4a5568;">Description:</div>
+                <div style="color: #718096;">@Model.Exam.Description</div>
+            }
+        </div>
+    </div>
+
+    @if (Model.Exam.Rubrics.Count > 0)
+    {
+        <div style="background: white; padding: 30px; border-radius: 8px; margin-bottom: 20px;">
+            <h4 style="color: #2d3748; margin-bottom: 16px;">Rubrics</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Criteria</th>
+                        <th style="width: 150px; text-align: center;">Max Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var rubric in Model.Exam.Rubrics)
+                    {
+                        <tr>
+                            <td>@rubric.Criteria</td>
+                            <td style="text-align: center;"><strong>@rubric.MaxScore</strong></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div style="margin-top: 16px; padding: 12px; background: #f7fafc; border-radius: 6px;">
+                <strong>Total Possible Score: @Model.Exam.Rubrics.Sum(r => r.MaxScore)</strong>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div style="background: #fff5e6; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 20px;">
+            <p style="margin: 0; color: #92400e;">⚠️ No rubrics defined for this exam yet.</p>
+        </div>
+    }
+
+    <div style="display: flex; gap: 10px;">
+        <a asp-page="/Admin/Reports/Index" asp-route-examId="@Model.Exam.Id" class="btn btn-primary">
+            📊 View Reports
+        </a>
+        @if (Model.Exam.TotalSubmissions > 0)
+        {
+            <a href="#" class="btn btn-secondary">
+                📥 Export Results (Excel)
+            </a>
+        }
+    </div>
+}

@@ -20,7 +20,13 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.Name = "PRN232.RazorPages.Auth";
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("ManagerOnly", policy => policy.RequireRole("Manager"));
+    options.AddPolicy("ExaminerOnly", policy => policy.RequireRole("Examiner"));
+    options.AddPolicy("AdminOrManager", policy => policy.RequireRole("Admin", "Manager"));
+});
 
 // Add HttpClient for API calls
 builder.Services.AddHttpClient<ApiClient>(client =>
