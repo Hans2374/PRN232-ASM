@@ -76,9 +76,9 @@ public class EditModel : PageModel
             TempData["Error"] = "Your session has expired. Please login again.";
             return RedirectToPage("/Account/Login");
         }
-        catch (HttpRequestException ex)
+        catch (ApiException ex)
         {
-            _logger.LogError(ex, "Connection error while loading user. UserId: {UserId}", id);
+            _logger.LogError(ex, "API error while loading user. UserId: {UserId} - {StatusCode}", id, ex.StatusCode);
             TempData["Error"] = "Failed to connect to API. Please ensure the API is running.";
             return RedirectToPage("/Admin/Users/Index");
         }
@@ -129,13 +129,13 @@ public class EditModel : PageModel
                 return Page();
             }
         }
-        catch (HttpRequestException ex) when (ex.Message.Contains("404") || ex.Message.Contains("NotFound"))
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             _logger.LogWarning("User not found during update. UserId: {UserId}", id);
             TempData["Error"] = "User not found. It may have been deleted.";
             return RedirectToPage("/Admin/Users/Index");
         }
-        catch (HttpRequestException ex) when (ex.Message.Contains("400") || ex.Message.Contains("BadRequest"))
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.BadRequest)
         {
             _logger.LogWarning(ex, "Bad request while updating user");
             TempData["Error"] = "Invalid user data. Please check all fields and try again.";
@@ -150,9 +150,9 @@ public class EditModel : PageModel
             TempData["Error"] = "Your session has expired. Please login again.";
             return RedirectToPage("/Account/Login");
         }
-        catch (HttpRequestException ex)
+        catch (ApiException ex)
         {
-            _logger.LogError(ex, "Connection error while updating user");
+            _logger.LogError(ex, "API error while updating user: {StatusCode}", ex.StatusCode);
             TempData["Error"] = "Failed to connect to API. Please ensure the API is running.";
             User = await _apiClient.GetUserByIdAsync(id);
             CurrentUsername = User?.Username ?? string.Empty;

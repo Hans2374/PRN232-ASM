@@ -35,6 +35,9 @@ public class IndexModel : PageModel
     
     [BindProperty(SupportsGet = true)]
     public string? SearchTerm { get; set; }
+    
+    [BindProperty(SupportsGet = true)]
+    public string FilterMode { get; set; } = "All"; // All | Active | Inactive
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -45,16 +48,30 @@ public class IndexModel : PageModel
             var users = await _apiClient.GetUsersAsync();
             Users = users ?? new List<UserResponse>();
 
-            // Client-side filtering if search term provided
+            // Apply filter mode for active/inactive/all
+            IEnumerable<UserResponse> filtered = Users;
+
+            if (FilterMode == "Active")
+            {
+                filtered = filtered.Where(u => u.IsActive);
+            }
+            else if (FilterMode == "Inactive")
+            {
+                filtered = filtered.Where(u => !u.IsActive);
+            }
+
+            // Client-side search filtering
             if (!string.IsNullOrWhiteSpace(SearchTerm))
             {
-                Users = Users.Where(u =>
+                filtered = filtered.Where(u =>
                     u.Username.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
                     u.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
                     u.Email.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
                     u.Role.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
-                ).ToList();
+                );
             }
+
+            Users = filtered.ToList();
 
             _logger.LogInformation("Loaded {Count} users", Users.Count);
             return Page();
@@ -65,9 +82,9 @@ public class IndexModel : PageModel
             TempData["Error"] = "Your session has expired. Please login again.";
             return RedirectToPage("/Account/Login");
         }
-        catch (HttpRequestException ex)
+        catch (ApiException ex)
         {
-            _logger.LogError(ex, "Connection error while loading users. API may be unreachable.");
+            _logger.LogError(ex, "API error while loading users: {StatusCode}", ex.StatusCode);
             TempData["Error"] = "Failed to load users. Please check that the API is running and accessible.";
             Users = new List<UserResponse>();
             return Page();
@@ -106,9 +123,9 @@ public class IndexModel : PageModel
             TempData["Error"] = "Your session has expired. Please login again.";
             return RedirectToPage("/Account/Login");
         }
-        catch (HttpRequestException ex)
+        catch (ApiException ex)
         {
-            _logger.LogError(ex, "Connection error while deleting user {UserId}", id);
+            _logger.LogError(ex, "API error while deleting user {UserId}: {StatusCode}", id, ex.StatusCode);
             TempData["Error"] = "Failed to connect to API. Please ensure the API is running.";
         }
         catch (Exception ex)

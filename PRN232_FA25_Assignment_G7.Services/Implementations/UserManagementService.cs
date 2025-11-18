@@ -42,7 +42,8 @@ public class UserManagementService : IUserManagementService
         var exists = await _userRepository.ExistsByUsernameAsync(request.Username);
         if (exists)
         {
-            throw new InvalidOperationException($"Username '{request.Username}' is already taken.");
+            // Throw a dedicated exception so the API layer can return 409 Conflict
+            throw new PRN232_FA25_Assignment_G7.Services.Exceptions.DuplicateUsernameException($"Username '{request.Username}' is already taken.");
         }
 
         // Parse and validate role

@@ -25,6 +25,20 @@
     </div>
 </form>
 
+<!-- Filter controls -->
+<form method="get" style="margin-bottom: 16px;">
+    <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+    <div style="display:flex; gap:12px; align-items:center;">
+        <label style="font-weight:600; color:#2d3748;">Show:</label>
+        <select name="FilterMode" onchange="this.form.submit()" style="padding:8px 10px; border:1px solid #e2e8f0; border-radius:6px;">
+            <option value="All" selected="@(Model.FilterMode == "All")">All</option>
+            <option value="Active" selected="@(Model.FilterMode == "Active")">Active Only</option>
+            <option value="Inactive" selected="@(Model.FilterMode == "Inactive")">Inactive Only</option>
+        </select>
+        <span style="color:#718096; margin-left:8px;">Showing both active and inactive users by default</span>
+    </div>
+</form>
+
 @if (Model.Users.Count == 0 && string.IsNullOrWhiteSpace(Model.SearchTerm))
 {
     <div style="text-align: center; padding: 60px 20px; color: #718096; background: #f7fafc; border-radius: 8px;">
@@ -59,8 +73,16 @@ else
             <tbody>
                 @foreach (var user in Model.Users)
                 {
-                    <tr>
-                        <td><strong>@user.Username</strong></td>
+                    var rowStyle = user.IsActive ? "" : "opacity:0.6;";
+                    <tr style="@rowStyle">
+                        <td><strong>@user.Username</strong>
+                            @if (!user.IsActive)
+                            {
+                                <div style="margin-top:6px;">
+                                    <span class="badge" style="background: #cbd5e0; color: #2d3748;">Inactive</span>
+                                </div>
+                            }
+                        </td>
                         <td>@user.FullName</td>
                         <td>@user.Email</td>
                         <td>

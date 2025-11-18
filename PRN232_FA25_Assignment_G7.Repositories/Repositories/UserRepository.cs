@@ -27,8 +27,8 @@ public class UserRepository : IUserRepository
 
     public async Task<IEnumerable<User>> GetAllAsync()
     {
+        // Return all users, including inactive (soft-deleted) ones.
         return await _context.Users
-            .Where(u => u.IsActive)
             .ToListAsync();
     }
 
