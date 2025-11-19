@@ -6,6 +6,7 @@ using PRN232_FA25_Assignment_G7.API.DTOs;
 using PRN232_FA25_Assignment_G7.API.SignalR;
 using PRN232_FA25_Assignment_G7.Repositories;
 using PRN232_FA25_Assignment_G7.Repositories.Entities;
+using PRN232_FA25_Assignment_G7.Services.Helpers;
 
 namespace PRN232_FA25_Assignment_G7.API.Controllers;
 
@@ -17,15 +18,27 @@ public class SubmissionsController : ControllerBase
     private readonly ApplicationDbContext _context;
     private readonly IHubContext<SubmissionHub> _hubContext;
     private readonly ILogger<SubmissionsController> _logger;
+    private readonly FileProcessingHelper _fileHelper;
+    private readonly ViolationDetector _violationDetector;
+    private readonly DuplicateChecker _duplicateChecker;
+    private readonly WordImageExtractor _wordImageExtractor;
 
     public SubmissionsController(
         ApplicationDbContext context,
         IHubContext<SubmissionHub> hubContext,
-        ILogger<SubmissionsController> logger)
+        ILogger<SubmissionsController> logger,
+        FileProcessingHelper fileHelper,
+        ViolationDetector violationDetector,
+        DuplicateChecker duplicateChecker,
+        WordImageExtractor wordImageExtractor)
     {
         _context = context;
         _hubContext = hubContext;
         _logger = logger;
+        _fileHelper = fileHelper;
+        _violationDetector = violationDetector;
+        _duplicateChecker = duplicateChecker;
+        _wordImageExtractor = wordImageExtractor;
     }
 
     [HttpGet("{id:guid}")]
@@ -79,36 +92,165 @@ public class SubmissionsController : ControllerBase
 
     [HttpPost("upload")]
     [Authorize(Roles = "Admin,Manager,Moderator,Examiner")]
-    [RequestSizeLimit(100_000_000)] // 100MB
+    [RequestSizeLimit(100_000_000)] //100MB
     public async Task<ActionResult<SubmissionResponse>> Upload([FromForm] ProcessSubmissionRequest request, CancellationToken ct)
     {
         var exam = await _context.Exams.FindAsync([request.ExamId], ct);
         if (exam == null) return BadRequest("Exam not found.");
 
-        // TODO: Implement file processing (extract, scan for violations)
-        var extractedPath = $"/uploads/{request.ExamId}/{request.StudentCode}/{DateTime.UtcNow:yyyyMMddHHmmss}";
+        // Save uploaded file to disk under uploads/{examId}/{studentCode}/{timestamp}
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+        var baseUploads = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+        var submissionFolder = Path.Combine(baseUploads, request.ExamId.ToString(), request.StudentCode, timestamp);
+        Directory.CreateDirectory(submissionFolder);
 
+        var savedFilePath = Path.Combine(submissionFolder, request.File.FileName);
+        await using (var fs = new FileStream(savedFilePath, FileMode.Create))
+        {
+            await request.File.CopyToAsync(fs, ct).ConfigureAwait(false);
+        }
+
+        // Extract archive if needed and get extracted folder
+        string extractedFolder = submissionFolder;
+        try
+        {
+            extractedFolder = await _fileHelper.ExtractSubmissionAsync(savedFilePath, submissionFolder, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to extract submission: {File}", savedFilePath);
+            // proceed with original folder
+        }
+
+        // Create submission record
         var submission = new Submission
         {
             Id = Guid.NewGuid(),
             ExamId = request.ExamId,
             StudentCode = request.StudentCode,
             OriginalFileName = request.File.FileName,
-            ExtractedFolderPath = extractedPath,
+            ExtractedFolderPath = extractedFolder,
             CreatedAt = DateTime.UtcNow
         };
 
         _context.Submissions.Add(submission);
         await _context.SaveChangesAsync(ct);
 
-        // Broadcast via SignalR
+        // Run violation detection
+        var detected = await _violationDetector.ScanSubmissionAsync(extractedFolder, ct).ConfigureAwait(false);
+        var violationEntities = new List<Violation>();
+        foreach (var d in detected)
+        {
+            var ve = new Violation
+            {
+                Id = Guid.NewGuid(),
+                SubmissionId = submission.Id,
+                Type = d.Type,
+                Description = d.Description,
+                Severity = d.Severity,
+                IsZeroScore = d.IsZeroScore
+            };
+            violationEntities.Add(ve);
+        }
+
+        if (violationEntities.Any())
+        {
+            _context.Violations.AddRange(violationEntities);
+            await _context.SaveChangesAsync(ct);
+
+            // Broadcast violation flagged for each
+            foreach (var v in violationEntities)
+            {
+                await _hubContext.Clients.All.SendAsync("ViolationFlagged", new
+                {
+                    SubmissionId = submission.Id,
+                    StudentCode = submission.StudentCode,
+                    ViolationType = v.Type,
+                    IsZeroScore = v.IsZeroScore,
+                    Timestamp = DateTime.UtcNow
+                }, ct).ConfigureAwait(false);
+            }
+        }
+
+        // Extract images from Word documents and save them
+        var docxFiles = Directory.EnumerateFiles(extractedFolder, "*.docx", SearchOption.AllDirectories).ToList();
+        var extractedImages = new List<string>();
+        foreach (var docx in docxFiles)
+        {
+            var imgs = await _wordImageExtractor.ExtractImagesFromWordAsync(docx, Path.Combine(submissionFolder, "images"), ct).ConfigureAwait(false);
+            extractedImages.AddRange(imgs);
+        }
+
+        // Run duplicate detection against other submissions in same exam
+        var otherSubmissions = await _context.Submissions.Where(s => s.ExamId == request.ExamId && s.Id != submission.Id).ToListAsync(ct).ConfigureAwait(false);
+        var duplicateReports = new List<object>();
+        var myFiles = await _fileHelper.GetAllCodeFilesAsync(extractedFolder, ct).ConfigureAwait(false);
+
+        foreach (var other in otherSubmissions)
+        {
+            var otherFolder = other.ExtractedFolderPath;
+            if (string.IsNullOrEmpty(otherFolder) || !Directory.Exists(otherFolder)) continue;
+            var otherFiles = await _fileHelper.GetAllCodeFilesAsync(otherFolder, ct).ConfigureAwait(false);
+            double bestSim =0.0;
+            string? myFilePath = null;
+            string? otherFilePath = null;
+
+            foreach (var a in myFiles)
+            {
+                foreach (var b in otherFiles)
+                {
+                    var sim = await _duplicateChecker.CalculateSimilarityAsync(a, b, ct).ConfigureAwait(false);
+                    if (sim > bestSim)
+                    {
+                        bestSim = sim;
+                        myFilePath = a;
+                        otherFilePath = b;
+                    }
+                }
+            }
+
+            if (bestSim >=0.6) // threshold
+            {
+                // create violation
+                var dupViolation = new Violation
+                {
+                    Id = Guid.NewGuid(),
+                    SubmissionId = submission.Id,
+                    Type = "Plagiarism",
+                    Description = $"Similarity {bestSim:P0} with submission {other.Id} (files: {Path.GetFileName(myFilePath ?? "")} vs {Path.GetFileName(otherFilePath ?? "")})",
+                    Severity = (int)Math.Round(bestSim *10),
+                    IsZeroScore = bestSim >=0.9
+                };
+                _context.Violations.Add(dupViolation);
+                await _context.SaveChangesAsync(ct).ConfigureAwait(false);
+
+                duplicateReports.Add(new
+                {
+                    OtherSubmissionId = other.Id,
+                    Similarity = bestSim,
+                    MyFile = myFilePath,
+                    OtherFile = otherFilePath
+                });
+
+                // Broadcast duplicate found
+                await _hubContext.Clients.All.SendAsync("DuplicateFound", new
+                {
+                    SubmissionId = submission.Id,
+                    OtherSubmissionId = other.Id,
+                    Similarity = bestSim,
+                    Timestamp = DateTime.UtcNow
+                }, ct).ConfigureAwait(false);
+            }
+        }
+
+        // Broadcast submission uploaded
         await _hubContext.Clients.All.SendAsync("SubmissionUploaded", new
         {
             SubmissionId = submission.Id,
             StudentCode = submission.StudentCode,
             ExamName = exam.Name,
             Timestamp = DateTime.UtcNow
-        }, ct);
+        }, ct).ConfigureAwait(false);
 
         var response = new SubmissionResponse(
             submission.Id,
@@ -119,8 +261,10 @@ public class SubmissionsController : ControllerBase
             submission.ExtractedFolderPath,
             submission.Score,
             submission.CreatedAt,
-            0
+            await _context.Violations.CountAsync(v => v.SubmissionId == submission.Id, ct).ConfigureAwait(false)
         );
+
+        // Optionally include duplicateReports or extractedImages in a richer response via SignalR or separate endpoint.
 
         return CreatedAtAction(nameof(Get), new { id = submission.Id }, response);
     }
@@ -138,18 +282,18 @@ public class SubmissionsController : ControllerBase
         var hasZeroScoreViolation = submission.Violations.Any(v => v.IsZeroScore);
         if (hasZeroScoreViolation)
         {
-            submission.Score = 0;
+            submission.Score =0;
             await _context.SaveChangesAsync(ct);
 
             await _hubContext.Clients.All.SendAsync("SubmissionGraded", new
             {
                 SubmissionId = submission.Id,
                 StudentCode = submission.StudentCode,
-                Score = 0m,
+                Score =0m,
                 Timestamp = DateTime.UtcNow
             }, ct);
 
-            return Ok(new SubmissionScoringResult(submission.Id, 0, true, "Zero score due to violation."));
+            return Ok(new SubmissionScoringResult(submission.Id,0, true, "Zero score due to violation."));
         }
 
         submission.Score = score;
