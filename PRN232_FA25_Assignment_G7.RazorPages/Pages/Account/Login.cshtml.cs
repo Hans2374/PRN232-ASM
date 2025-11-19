@@ -115,7 +115,20 @@ public class LoginModel : PageModel
             {
                 return LocalRedirect(returnUrl);
             }
-            return RedirectToPage("/Admin/Index");
+            // Redirect to role-specific dashboard
+            switch (response.Role)
+            {
+                case "Admin":
+                    return RedirectToPage("/Admin/Dashboard");
+                case "Manager":
+                    return RedirectToPage("/Manager/Dashboard");
+                case "Moderator":
+                    return RedirectToPage("/Moderator/Dashboard");
+                case "Examiner":
+                    return RedirectToPage("/Examiner/Dashboard");
+                default:
+                    return RedirectToPage("/Index"); // fallback
+            }
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("Cannot connect to API"))
         {

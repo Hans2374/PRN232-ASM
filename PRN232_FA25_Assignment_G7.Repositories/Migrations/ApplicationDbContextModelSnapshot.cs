@@ -55,6 +55,29 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                     b.ToTable("Exams", (string)null);
                 });
 
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.ExamExaminer", b =>
+                {
+                    b.Property<Guid>("ExamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ExaminerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsPrimaryGrader")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.HasKey("ExamId", "ExaminerId");
+
+                    b.HasIndex("ExaminerId");
+
+                    b.ToTable("ExamExaminers", (string)null);
+                });
+
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Examiner", b =>
                 {
                     b.Property<Guid>("Id")
@@ -170,6 +193,10 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AdminComments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -183,12 +210,43 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTime?>("GradedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("GradedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("GradingComments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("ModeratorComments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<string>("OriginalFileName")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<int>("ReviewStatus")
+                        .HasColumnType("int");
+
                     b.Property<decimal?>("Score")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime?>("SecondGradedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("SecondGradedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SecondGradingComments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<decimal?>("SecondScore")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
@@ -196,6 +254,9 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("SubmissionStatus")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -255,7 +316,7 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                             Email = "admin@example.com",
                             FullName = "System Administrator",
                             IsActive = true,
-                            PasswordHash = "$2a$11$Vh.XvSWloAUNlKfoNmNSHOl0QfR9SNokr/gcB98Dp.bHBH9VrVOUy",
+                            PasswordHash = "$2a$11$NN7s91WhpREHokf0kwgo7.mIMf4DcwyHamCktzPzrlDFbgGI0Cmny",
                             Role = 1,
                             Username = "admin"
                         });
@@ -267,12 +328,33 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<bool>("IsZeroScore")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("ReviewComments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("ReviewStatus")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReviewedBy")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Severity")
                         .HasColumnType("int");
@@ -282,13 +364,14 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
 
                     b.Property<string>("Type")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("SubmissionId");
 
-                    b.ToTable("Violations");
+                    b.ToTable("Violations", (string)null);
                 });
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Exam", b =>
@@ -308,6 +391,25 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                     b.Navigation("Semester");
 
                     b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.ExamExaminer", b =>
+                {
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Exam", "Exam")
+                        .WithMany("ExamExaminers")
+                        .HasForeignKey("ExamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Examiner", "Examiner")
+                        .WithMany("ExamExaminers")
+                        .HasForeignKey("ExaminerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exam");
+
+                    b.Navigation("Examiner");
                 });
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.ExaminerSubject", b =>
@@ -364,6 +466,8 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Exam", b =>
                 {
+                    b.Navigation("ExamExaminers");
+
                     b.Navigation("Rubrics");
 
                     b.Navigation("Submissions");
@@ -371,6 +475,8 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Examiner", b =>
                 {
+                    b.Navigation("ExamExaminers");
+
                     b.Navigation("ExaminerSubjects");
                 });
 

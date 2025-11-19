@@ -1,0 +1,65 @@
+@page "{id}"
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Examiner.Violations.DetailsModel
+@{
+    ViewData["Title"] = "Violation Details";
+}
+
+<h2>Violation Details</h2>
+
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-warning">@TempData["AuthError"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model.Violation != null)
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Violation Information</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>ID:</strong> @Model.Violation.Id</p>
+            <p><strong>Reason:</strong> @Model.Violation.Reason</p>
+            <p><strong>Reported At:</strong> @Model.Violation.ReportedAt</p>
+            <p><strong>Status:</strong>
+                <span class="badge bg-@(Model.Violation.Status == "Resolved" ? "success" : "warning")">
+                    @Model.Violation.Status
+                </span>
+            </p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Decision Timeline</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Violation.Decisions != null && Model.Violation.Decisions.Any())
+            {
+                <ul class="list-group">
+                    @foreach (var decision in Model.Violation.Decisions.OrderBy(d => d.DecidedAt))
+                    {
+                        <li class="list-group-item">
+                            <strong>@decision.Role</strong> - @decision.Decision
+                            <br><small class="text-muted">@decision.DecidedAt</small>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p>No decisions yet.</p>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <p>Violation not found.</p>
+}
+
+<a asp-page="/Examiner/Violations/Index" class="btn btn-secondary">Back to Violations</a>

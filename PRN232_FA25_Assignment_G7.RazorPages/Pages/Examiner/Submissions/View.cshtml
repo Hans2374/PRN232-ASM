@@ -1,0 +1,49 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Examiner.Submissions.ViewModel
+@{
+    ViewData["Title"] = "Submission Detail";
+}
+
+<h2>Submission Detail</h2>
+
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-warning">@TempData["AuthError"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model.Submission == null)
+{
+    <p>No submission found.</p>
+}
+else
+{
+    <dl class="row">
+        <dt class="col-sm-2">Student</dt>
+        <dd class="col-sm-10">@Model.Submission.StudentName</dd>
+
+        <dt class="col-sm-2">Submitted At</dt>
+        <dd class="col-sm-10">@Model.Submission.SubmittedAt</dd>
+
+        <dt class="col-sm-2">File</dt>
+        <dd class="col-sm-10">
+            @if (!string.IsNullOrEmpty(Model.Submission.FileUrl))
+            {
+                <a href="@Model.Submission.FileUrl" target="_blank">Download</a>
+            }
+            else
+            {
+                <span>No file</span>
+            }
+        </dd>
+
+        <dt class="col-sm-2">Score</dt>
+        <dd class="col-sm-10">@Model.Submission.Score?.ToString() ?? "-"</dd>
+
+        <dt class="col-sm-2">Comments</dt>
+        <dd class="col-sm-10">@Model.Submission.Comments</dd>
+    </dl>
+}

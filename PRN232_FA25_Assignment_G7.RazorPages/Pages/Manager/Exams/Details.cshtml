@@ -1,0 +1,151 @@
+@page "{id}"
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Manager.Exams.DetailsModel
+@{
+    ViewData["Title"] = "Exam Details";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-warning">@TempData["AuthError"]</div>
+}
+
+@if (Model.Exam != null)
+{
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Exam Information</h5>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">@Model.Exam.ExamName</h5>
+                    <p class="card-text">
+                        <strong>Subject:</strong> @Model.Exam.SubjectName<br>
+                        <strong>Semester:</strong> @Model.Exam.SemesterName<br>
+                        <strong>Exam Date:</strong> @Model.Exam.ExamDate.ToString("yyyy-MM-dd")<br>
+                        <strong>Description:</strong> @Model.Exam.Description
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a asp-page="/Manager/Exams/Assign" asp-route-examId="@Model.Exam.Id" class="btn btn-primary w-100 mb-2">Assign Examiners</a>
+                    <a asp-page="/Manager/Submissions/Index" asp-route-examId="@Model.Exam.Id" class="btn btn-info w-100 mb-2">View Submissions</a>
+                    <a asp-page="/Manager/Grading/Index" class="btn btn-warning w-100">View Grading Overview</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Assigned Examiners</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Examiners != null && Model.Examiners.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Examiner Name</th>
+                                    <th>Role</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var examiner in Model.Examiners)
+                                {
+                                    <tr>
+                                        <td>@examiner.ExaminerName</td>
+                                        <td>
+                                            <span class="badge bg-@(examiner.IsPrimaryGrader ? "primary" : "secondary")">
+                                                @(examiner.IsPrimaryGrader ? "Primary Grader" : "Secondary Grader")
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">No examiners assigned.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Submission Statistics</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Submissions != null && Model.Submissions.Any())
+                {
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="card text-bg-success">
+                                <div class="card-body text-center">
+                                    <h4>@Model.Submissions.Count(s => s.Status == "Graded")</h4>
+                                    <small>Graded</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-bg-warning">
+                                <div class="card-body text-center">
+                                    <h4>@Model.Submissions.Count(s => s.Status == "Pending")</h4>
+                                    <small>Pending</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-bg-info">
+                                <div class="card-body text-center">
+                                    <h4>@Model.Submissions.Count(s => s.Status == "Submitted")</h4>
+                                    <small>Submitted</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-bg-danger">
+                                <div class="card-body text-center">
+                                    <h4>@Model.Submissions.Count(s => s.Status == "Flagged")</h4>
+                                    <small>Flagged</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <a asp-page="/Manager/Submissions/Index" asp-route-examId="@Model.Exam.Id" class="btn btn-primary">View All Submissions</a>
+                }
+                else
+                {
+                    <p class="text-muted">No submissions yet.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a asp-page="/Manager/Exams/Index" class="btn btn-secondary">Back to Exams</a>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">Exam not found.</div>
+}

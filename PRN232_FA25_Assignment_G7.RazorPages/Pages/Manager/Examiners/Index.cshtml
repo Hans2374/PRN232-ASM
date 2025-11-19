@@ -1,0 +1,67 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Manager.Examiners.IndexModel
+@{
+    ViewData["Title"] = "Manage Examiners";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-warning">@TempData["AuthError"]</div>
+}
+
+@if (Model.Examiners != null && Model.Examiners.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Assigned Exams</th>
+                    <th>Graded Submissions</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var examiner in Model.Examiners)
+                {
+                    <tr>
+                        <td>@examiner.Name</td>
+                        <td>@examiner.Email</td>
+                        <td>@examiner.AssignedExamsCount</td>
+                        <td>@examiner.TotalGradedSubmissions</td>
+                        <td>
+                            <span class="badge bg-@(examiner.Status == "Active" ? "success" : "secondary")">@examiner.Status</span>
+                        </td>
+                        <td>
+                            <a asp-page="/Manager/Examiners/Details" asp-route-id="@examiner.Id" class="btn btn-sm btn-outline-primary">View Details</a>
+                            <a asp-page="/Manager/Exams/Assign" asp-route-examinerId="@examiner.Id" class="btn btn-sm btn-outline-info ms-1">Assign Exams</a>
+                            <button type="button" class="btn btn-sm btn-outline-warning ms-1" onclick="toggleStatus('@examiner.Id', '@examiner.Status')">Toggle Status</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">No examiners found.</div>
+}
+
+<script>
+    function toggleStatus(examinerId, currentStatus) {
+        if (confirm('Are you sure you want to ' + (currentStatus === 'Active' ? 'disable' : 'enable') + ' this examiner?')) {
+            // Implement toggle status via AJAX or form post
+            alert('Toggle status functionality to be implemented');
+        }
+    }
+</script>

@@ -282,18 +282,18 @@ public class SubmissionsController : ControllerBase
         var hasZeroScoreViolation = submission.Violations.Any(v => v.IsZeroScore);
         if (hasZeroScoreViolation)
         {
-            submission.Score =0;
+            submission.Score = 0;
             await _context.SaveChangesAsync(ct);
 
             await _hubContext.Clients.All.SendAsync("SubmissionGraded", new
             {
                 SubmissionId = submission.Id,
                 StudentCode = submission.StudentCode,
-                Score =0m,
+                Score = 0m,
                 Timestamp = DateTime.UtcNow
             }, ct);
 
-            return Ok(new SubmissionScoringResult(submission.Id,0, true, "Zero score due to violation."));
+            return Ok(new SubmissionScoringResult(submission.Id, 0, true, "Zero score due to violation."));
         }
 
         submission.Score = score;
@@ -308,5 +308,136 @@ public class SubmissionsController : ControllerBase
         }, ct);
 
         return Ok(new SubmissionScoringResult(submission.Id, score, false, string.Empty));
+    }
+
+    [HttpGet("{id:guid}/detail")]
+    public async Task<ActionResult<SubmissionDetailResponse>> GetDetail(Guid id, CancellationToken ct)
+    {
+        var submission = await _context.Submissions
+            .Include(s => s.Exam)
+            .Include(s => s.Violations)
+            .FirstOrDefaultAsync(s => s.Id == id, ct);
+
+        if (submission == null) return NotFound();
+
+        var response = new SubmissionDetailResponse(
+            submission.Id,
+            submission.ExamId,
+            submission.Exam?.Name ?? string.Empty,
+            submission.StudentCode,
+            submission.OriginalFileName,
+            submission.ExtractedFolderPath,
+            submission.Score,
+            submission.SecondScore,
+            submission.CreatedAt,
+            submission.SubmissionStatus.ToString(),
+            submission.ReviewStatus.ToString(),
+            submission.GradingComments,
+            submission.SecondGradingComments,
+            submission.ModeratorComments,
+            submission.AdminComments,
+            submission.GradedAt,
+            submission.SecondGradedAt,
+            submission.Violations.Count
+        );
+
+        return Ok(response);
+    }
+
+    [HttpPost("{id:guid}/grade")]
+    [Authorize(Roles = "Examiner")]
+    public async Task<IActionResult> Grade(Guid id, [FromBody] GradeSubmissionRequest request, CancellationToken ct)
+    {
+        var submission = await _context.Submissions.FindAsync([id], ct);
+        if (submission == null) return NotFound();
+
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        submission.Score = request.Score;
+        submission.GradingComments = request.Comments;
+        submission.GradedBy = Guid.Parse(userId);
+        submission.GradedAt = DateTime.UtcNow;
+        submission.SubmissionStatus = SubmissionStatus.Graded;
+
+        await _context.SaveChangesAsync(ct);
+
+        await _hubContext.Clients.All.SendAsync("SubmissionGraded", new
+        {
+            SubmissionId = submission.Id,
+            StudentCode = submission.StudentCode,
+            Score = request.Score,
+            Timestamp = DateTime.UtcNow
+        }, ct);
+
+        return Ok();
+    }
+
+    [HttpPost("{id:guid}/double-grade")]
+    [Authorize(Roles = "Examiner")]
+    public async Task<IActionResult> DoubleGrade(Guid id, [FromBody] DoubleGradeRequest request, CancellationToken ct)
+    {
+        var submission = await _context.Submissions.FindAsync([id], ct);
+        if (submission == null) return NotFound();
+
+        if (submission.SubmissionStatus != SubmissionStatus.Graded)
+            return BadRequest("Submission must be graded first");
+
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        if (submission.GradedBy == Guid.Parse(userId))
+            return BadRequest("Cannot double-grade your own submission");
+
+        submission.SecondScore = request.SecondScore;
+        submission.SecondGradingComments = request.Comments;
+        submission.SecondGradedBy = Guid.Parse(userId);
+        submission.SecondGradedAt = DateTime.UtcNow;
+        submission.SubmissionStatus = SubmissionStatus.DoubleGraded;
+
+        await _context.SaveChangesAsync(ct);
+
+        return Ok();
+    }
+
+    [HttpPost("{id:guid}/moderator-adjust-score")]
+    [Authorize(Roles = "Moderator")]
+    public async Task<IActionResult> ModeratorAdjustScore(Guid id, [FromBody] AdjustScoreRequest request, CancellationToken ct)
+    {
+        var submission = await _context.Submissions.FindAsync([id], ct);
+        if (submission == null) return NotFound();
+
+        submission.Score = request.NewScore;
+        submission.ModeratorComments = request.Reason;
+        submission.ReviewStatus = ReviewStatus.Completed;
+
+        await _context.SaveChangesAsync(ct);
+
+        return Ok();
+    }
+
+    [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<ActionResult<IReadOnlyList<SubmissionResponse>>> GetAll(CancellationToken ct)
+    {
+        var submissions = await _context.Submissions
+            .Include(s => s.Exam)
+            .Include(s => s.Violations)
+            .OrderByDescending(s => s.CreatedAt)
+            .ToListAsync(ct);
+
+        var response = submissions.Select(s => new SubmissionResponse(
+            s.Id,
+            s.ExamId,
+            s.Exam?.Name ?? string.Empty,
+            s.StudentCode,
+            s.OriginalFileName,
+            s.ExtractedFolderPath,
+            s.Score,
+            s.CreatedAt,
+            s.Violations.Count
+        )).ToList();
+
+        return Ok(response);
     }
 }

@@ -14,7 +14,12 @@ public class SubmissionConfiguration : IEntityTypeConfiguration<Submission>
         builder.Property(s => s.OriginalFileName).IsRequired().HasMaxLength(255);
         builder.Property(s => s.ExtractedFolderPath).IsRequired().HasMaxLength(500);
         builder.Property(s => s.Score).HasPrecision(10, 2);
+        builder.Property(s => s.SecondScore).HasPrecision(10, 2);
         builder.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(s => s.GradingComments).HasMaxLength(2000);
+        builder.Property(s => s.SecondGradingComments).HasMaxLength(2000);
+        builder.Property(s => s.ModeratorComments).HasMaxLength(2000);
+        builder.Property(s => s.AdminComments).HasMaxLength(2000);
 
         builder.HasMany(s => s.Violations)
                .WithOne(v => v.Submission)

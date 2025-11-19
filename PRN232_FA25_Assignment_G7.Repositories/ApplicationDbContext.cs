@@ -13,6 +13,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Rubric> Rubrics => Set<Rubric>();
     public DbSet<Examiner> Examiners => Set<Examiner>();
     public DbSet<ExaminerSubject> ExaminerSubjects => Set<ExaminerSubject>();
+    public DbSet<ExamExaminer> ExamExaminers => Set<ExamExaminer>();
     public DbSet<Submission> Submissions => Set<Submission>();
     public DbSet<Violation> Violations => Set<Violation>();
     public DbSet<User> Users => Set<User>();

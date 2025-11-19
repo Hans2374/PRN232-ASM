@@ -1,0 +1,60 @@
+@page ""
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Examiner.Submissions.IndexModel
+@{
+    ViewData["Title"] = "Examiner - Submissions";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-error">@TempData["AuthError"]</div>
+}
+
+@if (Model.ExamId == null)
+{
+    <div class="alert alert-warning">No exam selected. Navigate from the Exams page to view submissions.</div>
+}
+else if (Model.Data == null || !Model.Data.Any())
+{
+    <div class="alert alert-info">No submissions found for this exam.</div>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Submitted At</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var s in Model.Data)
+        {
+            <tr>
+                <td>@s.StudentCode</td>
+                <td>@s.SubmittedAt.ToString("g")</td>
+                <td>@s.Status</td>
+                <td>
+                    <a asp-page="/Examiner/Submissions/View" asp-route-id="@s.Id" class="btn btn-primary btn-sm">View</a>
+                    @if (s.Status == "Pending")
+                    {
+                        <a asp-page="/Examiner/Submissions/Grade" asp-route-id="@s.Id" class="btn btn-success btn-sm">Grade</a>
+                    }
+                    @if (s.Status == "Double Grade Required")
+                    {
+                        <a asp-page="/Examiner/Submissions/DoubleGrade" asp-route-id="@s.Id" class="btn btn-warning btn-sm">Double Grade</a>
+                    }
+                    <a asp-page="/Examiner/Violations/Flag" asp-route-submissionId="@s.Id" class="btn btn-danger btn-sm">Flag Violation</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

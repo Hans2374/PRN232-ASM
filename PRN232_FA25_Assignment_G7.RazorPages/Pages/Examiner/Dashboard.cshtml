@@ -1,0 +1,50 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Examiner.DashboardModel
+@{
+    ViewData["Title"] = "Examiner Dashboard";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model.Data != null)
+{
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Assigned Exams</h5>
+                    <p class="card-text fs-2">@Model.Data.AssignedExamsCount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-warning mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Submissions to Grade</h5>
+                    <p class="card-text fs-2">@Model.Data.PendingSubmissionsCount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-info mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Double Grading Required</h5>
+                    <p class="card-text fs-2">@Model.Data.GradedSubmissionsCount</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">History</h5>
+                    <p class="card-text fs-2">@Model.Data.AssignedExams?.Count()</p>
+                </div>
+            </div>
+        </div>
+    </div>
+}

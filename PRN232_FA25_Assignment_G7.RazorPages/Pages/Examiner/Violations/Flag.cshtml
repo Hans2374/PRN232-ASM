@@ -1,0 +1,33 @@
+@page "{submissionId}"
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Examiner.Violations.FlagModel
+@{
+    ViewData["Title"] = "Flag Violation";
+}
+
+<h2>Report Violation</h2>
+
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-warning">@TempData["AuthError"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<form method="post">
+    <div class="mb-3">
+        <label for="Reason" class="form-label">Reason for Violation</label>
+        <textarea asp-for="Input.Reason" class="form-control" rows="4" required></textarea>
+        <span asp-validation-for="Input.Reason" class="text-danger"></span>
+    </div>
+
+    <!-- Optional file upload -->
+    <div class="mb-3">
+        <label for="Evidence" class="form-label">Evidence File (optional)</label>
+        <input type="file" class="form-control" name="evidence" />
+    </div>
+
+    <button type="submit" class="btn btn-danger">Report Violation</button>
+    <a asp-page="/Examiner/Submissions/Index" class="btn btn-secondary">Cancel</a>
+</form>

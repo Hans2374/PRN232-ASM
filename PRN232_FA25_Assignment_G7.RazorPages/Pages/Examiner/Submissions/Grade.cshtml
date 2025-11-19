@@ -1,0 +1,36 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Examiner.Submissions.GradeModel
+
+<h2>Grade Submission</h2>
+
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-warning">@TempData["AuthError"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model.Submission == null)
+{
+    <div>No submission found.</div>
+}
+else
+{
+    <form method="post">
+        <div class="form-group">
+            <label>Student</label>
+            <div>@Model.Submission.StudentName</div>
+        </div>
+        <div class="form-group">
+            <label asp-for="Input.Score">Score</label>
+            <input asp-for="Input.Score" class="form-control" type="number" />
+        </div>
+        <div class="form-group">
+            <label asp-for="Input.Comments">Comments</label>
+            <textarea asp-for="Input.Comments" class="form-control"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Grade</button>
+    </form>
+}

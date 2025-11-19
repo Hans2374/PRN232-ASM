@@ -1,0 +1,76 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Manager.Violations.IndexModel
+@{
+    ViewData["Title"] = "Violation Management";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-warning">@TempData["AuthError"]</div>
+}
+
+@if (Model.Violations != null && Model.Violations.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Submission ID</th>
+                    <th>Examiner</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Reported At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var violation in Model.Violations)
+                {
+                    <tr>
+                        <td>@violation.SubmissionId</td>
+                        <td>@violation.ExaminerName</td>
+                        <td>@violation.Reason</td>
+                        <td>
+                            <span class="badge bg-@(violation.Status == "Pending Manager Review" ? "warning" : violation.Status == "Escalated to Admin" ? "danger" : "success")">@violation.Status</span>
+                        </td>
+                        <td>@violation.ReportedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            <a asp-page="/Manager/Violations/Details" asp-route-id="@violation.Id" class="btn btn-sm btn-outline-primary">View Details</a>
+                            @if (violation.Status == "Pending Manager Review")
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-success ms-1" onclick="respondToViolation('@violation.Id', 'approve')">Approve</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger ms-1" onclick="respondToViolation('@violation.Id', 'reject')">Reject</button>
+                                <button type="button" class="btn btn-sm btn-outline-warning ms-1" onclick="respondToViolation('@violation.Id', 'escalate')">Escalate</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">No violations to review.</div>
+}
+
+<script>
+    function respondToViolation(violationId, action) {
+        const actions = {
+            'approve': 'approve this violation',
+            'reject': 'reject this violation',
+            'escalate': 'escalate this violation to Admin'
+        };
+        if (confirm(`Are you sure you want to ${actions[action]}?`)) {
+            // Implement AJAX call to respond
+            alert(`${action} action for violation ${violationId}`);
+        }
+    }
+</script>

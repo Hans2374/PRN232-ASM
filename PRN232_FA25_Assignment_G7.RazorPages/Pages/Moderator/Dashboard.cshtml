@@ -1,0 +1,95 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Moderator.DashboardModel
+@{
+    ViewData["Title"] = "Moderator Dashboard";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-warning">@TempData["AuthError"]</div>
+}
+
+@if (Model.Data != null)
+{
+    <div class="row">
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card text-bg-primary h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">📝 Exams Assigned</h5>
+                    <p class="card-text fs-2 mb-3">@Model.Data.ExamsAssignedForApproval</p>
+                    <p class="card-text small">Exams assigned for score approval</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card text-bg-warning h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">⏳ Pending Approvals</h5>
+                    <p class="card-text fs-2 mb-3">@Model.Data.PendingScoreApprovals</p>
+                    <p class="card-text small">Scores awaiting review</p>
+                    <a asp-page="/Moderator/Scores/Index" class="btn btn-sm btn-outline-light mt-auto">Review Scores</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card text-bg-danger h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">⚠️ Violation Reviews</h5>
+                    <p class="card-text fs-2 mb-3">@Model.Data.PendingViolationReviews</p>
+                    <p class="card-text small">Violations to review</p>
+                    <a asp-page="/Moderator/Violations/Index" class="btn btn-sm btn-outline-light mt-auto">Review Violations</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card text-bg-success h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">✅ Recently Resolved</h5>
+                    <p class="card-text fs-2 mb-3">@Model.Data.RecentlyResolvedItems</p>
+                    <p class="card-text small">Items resolved this week</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-page="/Moderator/Scores/Index" class="btn btn-primary">
+                            <i class="fas fa-star-half-alt me-2"></i>Review Scores
+                        </a>
+                        <a asp-page="/Moderator/Violations/Index" class="btn btn-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Review Violations
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-0">Activity feed will be displayed here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">Loading dashboard data...</div>
+}

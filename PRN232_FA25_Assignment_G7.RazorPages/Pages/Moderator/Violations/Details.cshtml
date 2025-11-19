@@ -1,0 +1,41 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Moderator.Violations.DetailsModel
+@{
+    ViewData["Title"] = "Review Violation";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+@if (Model.Violation != null)
+{
+    <div class="card mb-3">
+        <div class="card-header">Violation Details</div>
+        <div class="card-body">
+            <p><strong>ID:</strong> @Model.Violation.Id</p>
+            <p><strong>Student:</strong> @Model.Violation.StudentName</p>
+            <p><strong>Exam:</strong> @Model.Violation.ExamName</p>
+            <p><strong>Description:</strong> @Model.Violation.Description</p>
+            <p><strong>Status:</strong> @Model.Violation.ReviewStatus</p>
+            <p><strong>Reviewed By:</strong> @(Model.Violation.ReviewedBy ?? "-")</p>
+            <p><strong>Review Comments:</strong> @(Model.Violation.ReviewComments ?? "-")</p>
+            <p><strong>Created At:</strong> @Model.Violation.CreatedAt.ToString("g")</p>
+        </div>
+    </div>
+    <form method="post" asp-page-handler="Approve">
+        <div class="mb-3">
+            <label class="form-label">Review Comments</label>
+            <textarea asp-for="ReviewComments" class="form-control" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-success">Approve Violation</button>
+        <a asp-page="./Index" class="btn btn-secondary">Back</a>
+    </form>
+}

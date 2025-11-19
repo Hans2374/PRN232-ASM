@@ -10,4 +10,5 @@ public class Examiner
     public string Email { get; set; } = string.Empty;
 
     public ICollection<ExaminerSubject> ExaminerSubjects { get; set; } = new List<ExaminerSubject>();
+    public ICollection<ExamExaminer> ExamExaminers { get; set; } = new List<ExamExaminer>();
 }

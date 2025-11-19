@@ -1,0 +1,78 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Submissions.IndexModel
+@{
+    ViewData["Title"] = "Submissions Management";
+}
+
+<h2>Submissions Management</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model.Submissions.Any())
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Student</th>
+                <th>Exam</th>
+                <th>Submitted At</th>
+                <th>Status</th>
+                <th>Score</th>
+                <th>Second Score</th>
+                <th>Final Score</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var submission in Model.Submissions)
+            {
+                <tr>
+                    <td>@submission.Id</td>
+                    <td>@submission.StudentName</td>
+                    <td>@submission.ExamName</td>
+                    <td>@submission.SubmittedAt.ToString("g")</td>
+                    <td>
+                        @if (submission.Status == "Pending")
+                        {
+                            <span class="badge bg-warning">@submission.Status</span>
+                        }
+                        else if (submission.Status == "Graded")
+                        {
+                            <span class="badge bg-info">@submission.Status</span>
+                        }
+                        else if (submission.Status == "DoubleGraded")
+                        {
+                            <span class="badge bg-primary">@submission.Status</span>
+                        }
+                        else if (submission.Status == "Finalized")
+                        {
+                            <span class="badge bg-success">@submission.Status</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">@submission.Status</span>
+                        }
+                    </td>
+                    <td>@(submission.Score?.ToString("F2") ?? "-")</td>
+                    <td>@(submission.SecondScore?.ToString("F2") ?? "-")</td>
+                    <td>@(submission.FinalScore?.ToString("F2") ?? "-")</td>
+                    <td>
+                        <a asp-page="./Details" asp-route-id="@submission.Id" class="btn btn-sm btn-info">View Details</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">No submissions found.</p>
+}
