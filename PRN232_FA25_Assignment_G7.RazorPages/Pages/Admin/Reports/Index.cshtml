@@ -24,6 +24,17 @@
     </form>
 </div>
 
+<div style="background: white; padding: 30px; border-radius: 8px; margin-bottom: 20px;">
+    <h4 style="color: #2d3748; margin-bottom: 16px;">🚨 Export Violations Report</h4>
+    <p style="color: #718096; margin-bottom: 20px;">Export all violation cases across all exams.</p>
+
+    <form method="post" asp-page-handler="ExportViolations">
+        <button type="submit" class="btn btn-warning">
+            📥 Export Violations to Excel
+        </button>
+    </form>
+</div>
+
 @if (Model.Exams.Count > 0)
 {
     <div style="background: white; padding: 30px; border-radius: 8px;">

@@ -53,7 +53,7 @@ public class IndexModel : PageModel
     {
         try
         {
-            var response = await _apiClient.GetRawAsync($"/api/exams/{examId}/export-results");
+            var response = await _apiClient.GetRawAsync($"/api/reports/exams/{examId}/results/export");
             
             var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
             var fileName = $"Exam_Results_{examId}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
@@ -65,6 +65,26 @@ public class IndexModel : PageModel
         {
             _logger.LogError(ex, "Error exporting exam results for {ExamId}", examId);
             TempData["Error"] = $"Failed to export results: {ex.Message}";
+            return RedirectToPage();
+        }
+    }
+
+    public async Task<IActionResult> OnPostExportViolationsAsync()
+    {
+        try
+        {
+            var response = await _apiClient.GetRawAsync("/api/reports/violations/export");
+            
+            var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+            var fileName = $"Violations_Report_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            
+            var stream = await response.Content.ReadAsStreamAsync();
+            return File(stream, contentType, fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting violations report");
+            TempData["Error"] = $"Failed to export violations: {ex.Message}";
             return RedirectToPage();
         }
     }

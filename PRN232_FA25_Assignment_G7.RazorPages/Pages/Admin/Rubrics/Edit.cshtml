@@ -1,0 +1,50 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Rubrics.EditModel
+@{
+    ViewData["Title"] = "Edit Rubric";
+}
+
+<h2>Edit Rubric</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <form method="post">
+            <input type="hidden" asp-for="Input.Id" />
+            
+            <div class="mb-3">
+                <label asp-for="Input.Name" class="form-label"></label>
+                <input asp-for="Input.Name" class="form-control" />
+                <span asp-validation-for="Input.Name" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Description" class="form-label"></label>
+                <textarea asp-for="Input.Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Input.Description" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.MaxScore" class="form-label">Max Score</label>
+                <input asp-for="Input.MaxScore" type="number" class="form-control" />
+                <span asp-validation-for="Input.MaxScore" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.ExamId" class="form-label">Exam</label>
+                <select asp-for="Input.ExamId" asp-items="Model.Exams" class="form-select">
+                    <option value="">Select Exam</option>
+                </select>
+                <span asp-validation-for="Input.ExamId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Update Rubric</button>
+                <a asp-page="./Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,119 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Submissions.IndexModel
+@{
+    ViewData["Title"] = "Submissions Management";
+}
+
+<h2>Submissions Management</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model.Submissions.Any())
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Student Code</th>
+                <th>Exam</th>
+                <th>Submitted At</th>
+                <th>Status</th>
+                <th>Score</th>
+                <th>Second Score</th>
+                <th>Violations</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var submission in Model.Submissions)
+            {
+                <tr>
+                    <td>@submission.Id</td>
+                    <td>@submission.StudentCode</td>
+                    <td>@submission.Exam?.Name</td>
+                    <td>@submission.CreatedAt.ToString("g")</td>
+                    <td>
+                        @if (submission.SubmissionStatus == "Pending")
+                        {
+                            <span class="badge bg-warning">@submission.SubmissionStatus</span>
+                        }
+                        else if (submission.SubmissionStatus == "Graded")
+                        {
+                            <span class="badge bg-info">@submission.SubmissionStatus</span>
+                        }
+                        else if (submission.SubmissionStatus == "DoubleGraded")
+                        {
+                            <span class="badge bg-primary">@submission.SubmissionStatus</span>
+                        }
+                        else if (submission.SubmissionStatus == "Finalized")
+                        {
+                            <span class="badge bg-success">@submission.SubmissionStatus</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">@submission.SubmissionStatus</span>
+                        }
+                    </td>
+                    <td>@(submission.Score?.ToString("F2") ?? "-")</td>
+                    <td>@(submission.SecondScore?.ToString("F2") ?? "-")</td>
+                    <td>@submission.ViolationCount</td>
+                    <td>
+                        <a asp-page="./Details" asp-route-id="@submission.Id" class="btn btn-sm btn-info">View Details</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">No submissions found.</p>
+}
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        let connection;
+
+        function startSignalR() {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl('/submissionHub')
+                .build();
+
+            connection.on('SubmissionUploaded', function (data) {
+                // Refresh the page or add the new submission
+                location.reload();
+            });
+
+            connection.on('ViolationFlagged', function (data) {
+                // Show toast or update the row
+                showToast('Violation flagged for submission ' + data.SubmissionId);
+            });
+
+            connection.start().catch(function (err) {
+                console.error(err.toString());
+            });
+        }
+
+        function showToast(message) {
+            // Simple toast
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-info position-fixed';
+            toast.style.top = '10px';
+            toast.style.right = '10px';
+            toast.style.zIndex = '9999';
+            toast.innerHTML = message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        document.addEventListener('DOMContentLoaded', startSignalR);
+    </script>
+}

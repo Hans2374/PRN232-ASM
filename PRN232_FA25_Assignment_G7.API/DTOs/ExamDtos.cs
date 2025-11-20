@@ -31,3 +31,25 @@ public record ExamDetailResponse(
     List<RubricResponse> Rubrics,
     int TotalSubmissions
 );
+
+public record UpdateExamRequest(
+    [Required] Guid SubjectId,
+    [Required] Guid SemesterId,
+    [Required, StringLength(200)] string Name,
+    string? Description,
+    [Required] DateTime ExamDate
+);
+
+public record AssignExaminerRequest(
+    [Required] Guid ExaminerId,
+    bool IsPrimaryGrader = true
+);
+
+public record ExamExaminerResponse(
+    Guid ExamId,
+    Guid ExaminerId,
+    string ExaminerName,
+    string ExaminerEmail,
+    bool IsPrimaryGrader,
+    DateTime AssignedAt
+);

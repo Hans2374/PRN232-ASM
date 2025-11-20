@@ -22,6 +22,93 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Complaint", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("EvidencePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ReviewComments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReviewedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("StudentCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("SubmissionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewedBy");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.ToTable("Complaints", (string)null);
+                });
+
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.DuplicateGroup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<Guid>("ExamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("GroupName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("SimilarityScore")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("decimal(5,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExamId");
+
+                    b.ToTable("DuplicateGroups", (string)null);
+                });
+
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Exam", b =>
                 {
                     b.Property<Guid>("Id")
@@ -53,6 +140,29 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                     b.HasIndex("SubjectId");
 
                     b.ToTable("Exams", (string)null);
+                });
+
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.ExamExaminer", b =>
+                {
+                    b.Property<Guid>("ExamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ExaminerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsPrimaryGrader")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.HasKey("ExamId", "ExaminerId");
+
+                    b.HasIndex("ExaminerId");
+
+                    b.ToTable("ExamExaminers", (string)null);
                 });
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Examiner", b =>
@@ -92,6 +202,87 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                     b.HasIndex("SubjectId");
 
                     b.ToTable("ExaminerSubjects", (string)null);
+                });
+
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.ImportJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ArchiveName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("ExamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("FailedCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("ProcessedFiles")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("SemesterCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("StorageFolderPath")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("SubjectCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("SuccessCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("TotalFiles")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<Guid>("UploaderUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ViolationsCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExamId");
+
+                    b.HasIndex("UploaderUserId");
+
+                    b.ToTable("ImportJobs", (string)null);
                 });
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Rubric", b =>
@@ -170,10 +361,17 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AdminComments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<Guid?>("DuplicateGroupId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("ExamId")
                         .HasColumnType("uniqueidentifier");
@@ -183,12 +381,54 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("ExtractedText")
+                        .HasMaxLength(10000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FileHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime?>("GradedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("GradedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("GradingComments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid?>("ImportJobId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ModeratorComments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<string>("OriginalFileName")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<int>("ReviewStatus")
+                        .HasColumnType("int");
+
                     b.Property<decimal?>("Score")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime?>("SecondGradedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("SecondGradedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SecondGradingComments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<decimal?>("SecondScore")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
@@ -197,11 +437,52 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int>("SubmissionStatus")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("DuplicateGroupId");
 
                     b.HasIndex("ExamId");
 
+                    b.HasIndex("ImportJobId");
+
                     b.ToTable("Submissions", (string)null);
+                });
+
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.SubmissionImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ImagePath")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("SubmissionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.ToTable("SubmissionImages", (string)null);
                 });
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.User", b =>
@@ -255,9 +536,20 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                             Email = "admin@example.com",
                             FullName = "System Administrator",
                             IsActive = true,
-                            PasswordHash = "$2a$11$Vh.XvSWloAUNlKfoNmNSHOl0QfR9SNokr/gcB98Dp.bHBH9VrVOUy",
+                            PasswordHash = "$2a$11$MyugCFL2K4dU5UsMZZOr4eaIZIQFi2NQbgRCerwLe.CY40gqrXdHS",
                             Role = 1,
                             Username = "admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e"),
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "moderator@example.com",
+                            FullName = "Content Moderator",
+                            IsActive = true,
+                            PasswordHash = "$2a$11$qJY6nC/Fw5vf7w6V6pkEcOw4uzivLWDNyuzeuqgDkDpzzr3TBQodK",
+                            Role = 3,
+                            Username = "moderator"
                         });
                 });
 
@@ -267,28 +559,79 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<decimal>("ConfidenceScore")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("decimal(5,4)");
 
-                    b.Property<bool>("IsZeroScore")
-                        .HasColumnType("bit");
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
 
-                    b.Property<int>("Severity")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("SubmissionId")
+                    b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Type")
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Evidence")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Severity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<Guid?>("SubmissionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ViolationType")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedBy");
+
                     b.HasIndex("SubmissionId");
 
-                    b.ToTable("Violations");
+                    b.ToTable("Violations", (string)null);
+                });
+
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Complaint", b =>
+                {
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.User", "Reviewer")
+                        .WithMany()
+                        .HasForeignKey("ReviewedBy")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Submission", "Submission")
+                        .WithMany("Complaints")
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Reviewer");
+
+                    b.Navigation("Submission");
+                });
+
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.DuplicateGroup", b =>
+                {
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Exam", "Exam")
+                        .WithMany()
+                        .HasForeignKey("ExamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Exam");
                 });
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Exam", b =>
@@ -310,6 +653,25 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.ExamExaminer", b =>
+                {
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Exam", "Exam")
+                        .WithMany("ExamExaminers")
+                        .HasForeignKey("ExamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Examiner", "Examiner")
+                        .WithMany("ExamExaminers")
+                        .HasForeignKey("ExaminerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exam");
+
+                    b.Navigation("Examiner");
+                });
+
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.ExaminerSubject", b =>
                 {
                     b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Examiner", "Examiner")
@@ -329,6 +691,25 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.ImportJob", b =>
+                {
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Exam", "Exam")
+                        .WithMany()
+                        .HasForeignKey("ExamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.User", "Uploader")
+                        .WithMany()
+                        .HasForeignKey("UploaderUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Exam");
+
+                    b.Navigation("Uploader");
+                });
+
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Rubric", b =>
                 {
                     b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Exam", "Exam")
@@ -342,19 +723,33 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Submission", b =>
                 {
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.DuplicateGroup", "DuplicateGroup")
+                        .WithMany("Submissions")
+                        .HasForeignKey("DuplicateGroupId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Exam", "Exam")
                         .WithMany("Submissions")
                         .HasForeignKey("ExamId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.ImportJob", "ImportJob")
+                        .WithMany("Submissions")
+                        .HasForeignKey("ImportJobId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("DuplicateGroup");
+
                     b.Navigation("Exam");
+
+                    b.Navigation("ImportJob");
                 });
 
-            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Violation", b =>
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.SubmissionImage", b =>
                 {
                     b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Submission", "Submission")
-                        .WithMany("Violations")
+                        .WithMany("Images")
                         .HasForeignKey("SubmissionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -362,8 +757,33 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                     b.Navigation("Submission");
                 });
 
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Violation", b =>
+                {
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.User", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Submission", "Submission")
+                        .WithMany("Violations")
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Creator");
+
+                    b.Navigation("Submission");
+                });
+
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.DuplicateGroup", b =>
+                {
+                    b.Navigation("Submissions");
+                });
+
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Exam", b =>
                 {
+                    b.Navigation("ExamExaminers");
+
                     b.Navigation("Rubrics");
 
                     b.Navigation("Submissions");
@@ -371,7 +791,14 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Examiner", b =>
                 {
+                    b.Navigation("ExamExaminers");
+
                     b.Navigation("ExaminerSubjects");
+                });
+
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.ImportJob", b =>
+                {
+                    b.Navigation("Submissions");
                 });
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Semester", b =>
@@ -388,6 +815,10 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Submission", b =>
                 {
+                    b.Navigation("Complaints");
+
+                    b.Navigation("Images");
+
                     b.Navigation("Violations");
                 });
 #pragma warning restore 612, 618

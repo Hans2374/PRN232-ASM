@@ -1,0 +1,229 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Examiner.Submissions.GradeModel
+@{
+    ViewData["Title"] = "Grade Submission";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-edit"></i> Grade Submission</h4>
+                <a href="/Examiner/Submissions/Index" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back to Submissions
+                </a>
+            </div>
+            <div class="card-body">
+                @if (Model.ErrorMessage != null)
+                {
+                    <div class="alert alert-danger">
+                        @Model.ErrorMessage
+                    </div>
+                }
+                else if (Model.Submission != null)
+                {
+                    <!-- Student Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Student Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Name:</strong> @Model.Submission.StudentName</p>
+                                    <p><strong>Code:</strong> @Model.Submission.StudentCode</p>
+                                    <p><strong>Exam:</strong> @Model.Submission.ExamName</p>
+                                    <p><strong>Submitted:</strong> @Model.Submission.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Submission Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>File:</strong> @Model.Submission.OriginalFileName</p>
+                                    @if (Model.Submission.Violations.Any())
+                                    {
+                                        <p><strong>Violations:</strong></p>
+                                        <ul>
+                                            @foreach (var violation in Model.Submission.Violations)
+                                            {
+                                                <li class="text-danger">@violation.Type: @violation.Description</li>
+                                            }
+                                        </ul>
+                                    }
+                                    else
+                                    {
+                                        <p><strong>Violations:</strong> <span class="text-success">None</span></p>
+                                    }
+                                    <p><strong>Status:</strong>
+                                        @if (Model.Submission.Score.HasValue)
+                                        {
+                                            <span class="badge badge-success">Graded (@Model.Submission.Score)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-warning">Pending Grading</span>
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Preview -->
+                    @if (!string.IsNullOrEmpty(Model.Submission.FileUrl))
+                    {
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Submission File</h6>
+                                </div>
+                                <div class="card-body">
+                                    <iframe src="@Model.Submission.FileUrl" width="100%" height="600px" style="border: 1px solid #ddd;"></iframe>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Grading Form -->
+                    <form method="post" id="gradingForm">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>Rubric Grading</h6>
+                            </div>
+                            <div class="card-body">
+                                @if (Model.Submission.Rubric.Any())
+                                {
+                                    <div id="rubricItems">
+                                        @for (int i = 0; i < Model.Submission.Rubric.Count; i++)
+                                        {
+                                            var criterion = Model.Submission.Rubric[i];
+                                            <div class="rubric-item mb-3 p-3 border rounded">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <h6>@criterion.Description</h6>
+                                                        <small class="text-muted">Max Score: @criterion.MaxScore points</small>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label">Score</label>
+                                                        <input type="number" class="form-control score-input"
+                                                               name="Scores[@i].Score" min="0" max="@criterion.MaxScore"
+                                                               step="0.5" value="@(Model.Submission.Scores?.FirstOrDefault(s => s.CriterionId == criterion.CriterionId)?.Score ?? 0)"
+                                                               @(Model.Submission.Score.HasValue ? "readonly" : "")>
+                                                        <input type="hidden" name="Scores[@i].CriterionId" value="@criterion.CriterionId">
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label">Percentage</label>
+                                                        <input type="text" class="form-control percentage-display" readonly>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="finalComment" class="form-label">Final Comment</label>
+                                                <textarea class="form-control" id="finalComment" name="FinalComment" rows="3"
+                                                          placeholder="Optional comments about the submission..."
+                                                          @(Model.Submission.Score.HasValue ? "readonly" : "")>@Model.Submission.FinalComment</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    <h6>Total Score: <span id="totalScore">0</span> / <span id="maxScore">@Model.Submission.Rubric.Sum(c => c.MaxScore)</span></h6>
+                                                    <p>Percentage: <span id="totalPercentage">0%</span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-warning">
+                                        No rubric defined for this exam.
+                                    </div>
+                                }
+                            </div>
+                            <div class="card-footer">
+                                @if (!Model.Submission.Score.HasValue)
+                                {
+                                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                                        <i class="fas fa-save"></i> Submit Grade
+                                    </button>
+                                    <button type="button" class="btn btn-secondary ms-2" onclick="window.history.back()">
+                                        Cancel
+                                    </button>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-info">
+                                        This submission has already been graded. You can view the grades but cannot modify them.
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        Submission not found.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function calculateScores() {
+            const rubricItems = document.querySelectorAll('.rubric-item');
+            let totalScore = 0;
+            let maxScore = 0;
+
+            rubricItems.forEach(item => {
+                const scoreInput = item.querySelector('.score-input');
+                const percentageDisplay = item.querySelector('.percentage-display');
+                const maxScoreText = item.querySelector('small').textContent;
+                const maxScoreValue = parseFloat(maxScoreText.replace('Max Score: ', '').replace(' points', ''));
+
+                const score = parseFloat(scoreInput.value) || 0;
+                const percentage = maxScoreValue > 0 ? ((score / maxScoreValue) * 100).toFixed(1) : 0;
+
+                percentageDisplay.value = percentage + '%';
+
+                totalScore += score;
+                maxScore += maxScoreValue;
+            });
+
+            document.getElementById('totalScore').textContent = totalScore.toFixed(1);
+            document.getElementById('maxScore').textContent = maxScore.toFixed(1);
+            document.getElementById('totalPercentage').textContent =
+                maxScore > 0 ? ((totalScore / maxScore) * 100).toFixed(1) + '%' : '0%';
+        }
+
+        // Calculate scores on input change
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('score-input')) {
+                calculateScores();
+            }
+        });
+
+        // Initial calculation
+        document.addEventListener('DOMContentLoaded', calculateScores);
+
+        // Form validation
+        document.getElementById('gradingForm').addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        });
+    </script>
+}

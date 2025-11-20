@@ -1,0 +1,111 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Exams.AssignExaminersModel
+@{
+    ViewData["Title"] = "Assign Examiners";
+}
+
+<h2>Assign Examiners - @Model.Exam.Name</h2>
+
+<div class="mb-3">
+    <p><strong>Subject:</strong> @Model.Exam.SubjectName</p>
+    <p><strong>Semester:</strong> @Model.Exam.SemesterName</p>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <h4>Currently Assigned Examiners</h4>
+        @if (Model.AssignedExaminers.Any())
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Assigned At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var examiner in Model.AssignedExaminers)
+                    {
+                        <tr>
+                            <td>@examiner.Name</td>
+                            <td>@examiner.Email</td>
+                            <td>
+                                @if (examiner.IsPrimaryGrader)
+                                {
+                                    <span class="badge bg-primary">Primary</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Secondary</span>
+                                }
+                            </td>
+                            <td>@examiner.AssignedAt.ToString("g")</td>
+                            <td>
+                                <form method="post" asp-page-handler="Unassign" style="display:inline;">
+                                    <input type="hidden" name="examId" value="@Model.Exam.Id" />
+                                    <input type="hidden" name="examinerId" value="@examiner.ExaminerId" />
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to unassign this examiner?')">
+                                        Unassign
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="text-muted">No examiners assigned yet.</p>
+        }
+    </div>
+
+    <div class="col-md-6">
+        <h4>Assign New Examiner</h4>
+        @if (Model.AvailableExaminers.Any())
+        {
+            <form method="post" asp-page-handler="Assign">
+                <input type="hidden" asp-for="Assignment.ExamId" />
+                
+                <div class="mb-3">
+                    <label class="form-label">Examiner</label>
+                    <select asp-for="Assignment.ExaminerId" asp-items="Model.AvailableExaminers" class="form-select">
+                        <option value="">Select Examiner</option>
+                    </select>
+                    <span asp-validation-for="Assignment.ExaminerId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input asp-for="Assignment.IsPrimaryGrader" type="checkbox" class="form-check-input" />
+                    <label asp-for="Assignment.IsPrimaryGrader" class="form-check-label">Primary Grader</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Assign Examiner</button>
+            </form>
+        }
+        else
+        {
+            <p class="text-muted">All available examiners have been assigned.</p>
+        }
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-page="./Index" class="btn btn-secondary">Back to Exams</a>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

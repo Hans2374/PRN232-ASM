@@ -3,6 +3,12 @@ using PRN232_FA25_Assignment_G7.RazorPages.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure FormOptions for large file uploads in RazorPages
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = long.MaxValue; // Allow unlimited multipart body size for large RAR archives
+});
+
 // Add services to the container
 builder.Services.AddRazorPages();
 
@@ -12,7 +18,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.LoginPath = "/Account/Login";
         options.LogoutPath = "/Account/Logout";
-        options.AccessDeniedPath = "/Account/AccessDenied";
+        // options.AccessDeniedPath = "/Account/AccessDenied"; // Removed to prevent redirect to non-existent page
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
         options.Cookie.HttpOnly = true;
@@ -24,6 +30,7 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
     options.AddPolicy("ManagerOnly", policy => policy.RequireRole("Manager"));
+    options.AddPolicy("ModeratorOnly", policy => policy.RequireRole("Moderator"));
     options.AddPolicy("ExaminerOnly", policy => policy.RequireRole("Examiner"));
     options.AddPolicy("AdminOrManager", policy => policy.RequireRole("Admin", "Manager"));
 });

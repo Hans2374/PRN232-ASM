@@ -1,0 +1,148 @@
+@page "{id}"
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Moderator.Complaints.DetailsModel
+@{
+    ViewData["Title"] = "Complaint Details";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-warning">@TempData["AuthError"]</div>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+@if (Model.Complaint != null)
+{
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">@Model.Complaint.Title</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-6">
+                            <strong>Student:</strong> @Model.Complaint.StudentCode
+                        </div>
+                        <div class="col-sm-6">
+                            <strong>Exam:</strong> @Model.Complaint.ExamName
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-6">
+                            <strong>Status:</strong>
+                            <span class="badge bg-@(Model.Complaint.Status switch { ComplaintStatus.Pending => "warning", ComplaintStatus.Approved => "success", ComplaintStatus.Rejected => "danger", ComplaintStatus.Escalated => "info", _ => "secondary" })">
+                                @Model.Complaint.Status
+                            </span>
+                        </div>
+                        <div class="col-sm-6">
+                            <strong>Created:</strong> @Model.Complaint.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Description:</strong>
+                        <div class="mt-2 p-3 bg-light rounded">@Model.Complaint.Description</div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Complaint.EvidencePath))
+                    {
+                        <div class="mb-3">
+                            <strong>Evidence:</strong>
+                            <div class="mt-2">
+                                <a href="@Model.Complaint.EvidencePath" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-file me-2"></i>View Evidence
+                                </a>
+                            </div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Complaint.ReviewComments))
+                    {
+                        <div class="mb-3">
+                            <strong>Review Comments:</strong>
+                            <div class="mt-2 p-3 bg-info text-white rounded">@Model.Complaint.ReviewComments</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            @if (Model.Complaint.Timeline != null && Model.Complaint.Timeline.Any())
+            {
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Timeline</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            @foreach (var item in Model.Complaint.Timeline.OrderByDescending(t => t.Timestamp))
+                            {
+                                <div class="timeline-item">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="timeline-title">@item.Action</h6>
+                                        <p class="timeline-text">@item.Details</p>
+                                        <small class="text-muted">@item.Timestamp.ToString("MMM dd, yyyy HH:mm")</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-md-4">
+            @if (Model.Complaint.Status == ComplaintStatus.Pending)
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Decision</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            <div class="mb-3">
+                                <label for="decision" class="form-label">Decision</label>
+                                <select id="decision" name="decision" class="form-select" required>
+                                    <option value="">Select decision...</option>
+                                    <option value="approve">Approve</option>
+                                    <option value="reject">Reject</option>
+                                    <option value="escalate">Escalate</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="comment" class="form-label">Comment <span class="text-danger">*</span></label>
+                                <textarea id="comment" name="comment" class="form-control" rows="3" placeholder="Provide a comment for your decision..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Submit Decision</button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h6>This complaint has been @Model.Complaint.Status.ToString().ToLower()</h6>
+                        <a asp-page="Index" class="btn btn-secondary">Back to List</a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">Complaint not found.</div>
+}

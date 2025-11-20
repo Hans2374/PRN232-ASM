@@ -13,9 +13,14 @@ public class ApplicationDbContext : DbContext
     public DbSet<Rubric> Rubrics => Set<Rubric>();
     public DbSet<Examiner> Examiners => Set<Examiner>();
     public DbSet<ExaminerSubject> ExaminerSubjects => Set<ExaminerSubject>();
+    public DbSet<ExamExaminer> ExamExaminers => Set<ExamExaminer>();
     public DbSet<Submission> Submissions => Set<Submission>();
     public DbSet<Violation> Violations => Set<Violation>();
+    public DbSet<Complaint> Complaints => Set<Complaint>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
+    public DbSet<SubmissionImage> SubmissionImages => Set<SubmissionImage>();
+    public DbSet<DuplicateGroup> DuplicateGroups => Set<DuplicateGroup>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,6 +36,17 @@ public class ApplicationDbContext : DbContext
                 FullName = "System Administrator",
                 Email = "admin@example.com",
                 Role = Role.Admin,
+                CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                IsActive = true
+            },
+            new User
+            {
+                Id = Guid.Parse("b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e"),
+                Username = "moderator",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("moderator123"),
+                FullName = "Content Moderator",
+                Email = "moderator@example.com",
+                Role = Role.Moderator,
                 CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 IsActive = true
             }

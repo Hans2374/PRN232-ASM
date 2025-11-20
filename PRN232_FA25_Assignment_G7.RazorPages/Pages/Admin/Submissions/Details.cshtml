@@ -1,0 +1,174 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Submissions.DetailsModel
+@{
+    ViewData["Title"] = "Submission Details";
+}
+
+<h2>Submission Details</h2>
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h4>Basic Information</h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>ID:</strong> @Model.Submission.Id</p>
+                <p><strong>Student:</strong> @Model.Submission.StudentName</p>
+                <p><strong>Exam:</strong> @Model.Submission.ExamName</p>
+                <p><strong>Subject:</strong> @Model.Submission.SubjectName</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Submitted At:</strong> @Model.Submission.SubmittedAt.ToString("g")</p>
+                <p><strong>File Path:</strong> @Model.Submission.FilePath</p>
+                <p>
+                    <strong>Status:</strong> 
+                    @if (Model.Submission.Status == "Pending")
+                    {
+                        <span class="badge bg-warning">@Model.Submission.Status</span>
+                    }
+                    else if (Model.Submission.Status == "Graded")
+                    {
+                        <span class="badge bg-info">@Model.Submission.Status</span>
+                    }
+                    else if (Model.Submission.Status == "DoubleGraded")
+                    {
+                        <span class="badge bg-primary">@Model.Submission.Status</span>
+                    }
+                    else if (Model.Submission.Status == "Finalized")
+                    {
+                        <span class="badge bg-success">@Model.Submission.Status</span>
+                    }
+                </p>
+                <p>
+                    <strong>Review Status:</strong>
+                    @if (Model.Submission.ReviewStatus == "None")
+                    {
+                        <span class="badge bg-secondary">@Model.Submission.ReviewStatus</span>
+                    }
+                    else if (Model.Submission.ReviewStatus == "ModeratorPending")
+                    {
+                        <span class="badge bg-warning">@Model.Submission.ReviewStatus</span>
+                    }
+                    else if (Model.Submission.ReviewStatus == "AdminPending")
+                    {
+                        <span class="badge bg-danger">@Model.Submission.ReviewStatus</span>
+                    }
+                    else if (Model.Submission.ReviewStatus == "Completed")
+                    {
+                        <span class="badge bg-success">@Model.Submission.ReviewStatus</span>
+                    }
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h4>Grading Information</h4>
+    </div>
+    <div class="card-body">
+        @if (Model.Submission.Score.HasValue)
+        {
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <h5>First Grading</h5>
+                    <p><strong>Score:</strong> @Model.Submission.Score.Value.ToString("F2")</p>
+                    <p><strong>Graded By:</strong> @Model.Submission.GradedBy</p>
+                    <p><strong>Graded At:</strong> @Model.Submission.GradedAt?.ToString("g")</p>
+                    <p><strong>Comments:</strong> @Model.Submission.GradingComments</p>
+                </div>
+            </div>
+        }
+
+        @if (Model.Submission.SecondScore.HasValue)
+        {
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <h5>Second Grading</h5>
+                    <p><strong>Second Score:</strong> @Model.Submission.SecondScore.Value.ToString("F2")</p>
+                    <p><strong>Second Graded By:</strong> @Model.Submission.SecondGradedBy</p>
+                    <p><strong>Second Graded At:</strong> @Model.Submission.SecondGradedAt?.ToString("g")</p>
+                    <p><strong>Comments:</strong> @Model.Submission.SecondGradingComments</p>
+                </div>
+            </div>
+        }
+
+        @if (Model.Submission.FinalScore.HasValue)
+        {
+            <div class="row">
+                <div class="col-md-12">
+                    <h5>Final Score</h5>
+                    <p><strong>Final Score:</strong> <span class="text-success fs-4">@Model.Submission.FinalScore.Value.ToString("F2")</span></p>
+                    @if (!string.IsNullOrEmpty(Model.Submission.ModeratorComments))
+                    {
+                        <p><strong>Moderator Comments:</strong> @Model.Submission.ModeratorComments</p>
+                        <p><strong>Adjusted By:</strong> @Model.Submission.ModeratorAdjustedBy</p>
+                        <p><strong>Adjusted At:</strong> @Model.Submission.ModeratorAdjustedAt?.ToString("g")</p>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (!Model.Submission.Score.HasValue)
+        {
+            <p class="text-muted">Not graded yet.</p>
+        }
+    </div>
+</div>
+
+@if (Model.Submission.Violations.Any())
+{
+    <div class="card">
+        <div class="card-header">
+            <h4>Violations</h4>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Reviewed By</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var violation in Model.Submission.Violations)
+                    {
+                        <tr>
+                            <td>@violation.Id</td>
+                            <td>@violation.Description</td>
+                            <td>
+                                @if (violation.ReviewStatus == "Pending")
+                                {
+                                    <span class="badge bg-warning">@violation.ReviewStatus</span>
+                                }
+                                else if (violation.ReviewStatus == "ModeratorApproved")
+                                {
+                                    <span class="badge bg-info">Moderator Approved</span>
+                                }
+                                else if (violation.ReviewStatus == "AdminApproved")
+                                {
+                                    <span class="badge bg-success">Admin Approved</span>
+                                }
+                                else if (violation.ReviewStatus == "ModeratorRejected" || violation.ReviewStatus == "AdminRejected")
+                                {
+                                    <span class="badge bg-danger">Rejected</span>
+                                }
+                            </td>
+                            <td>@(violation.ReviewedBy ?? "-")</td>
+                            <td>@violation.CreatedAt.ToString("g")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<div class="mt-3">
+    <a asp-page="./Index" class="btn btn-secondary">Back to Submissions</a>
+</div>
