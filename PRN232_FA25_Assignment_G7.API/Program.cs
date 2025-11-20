@@ -4,6 +4,7 @@ using PRN232_FA25_Assignment_G7.API.Extensions;
 using PRN232_FA25_Assignment_G7.API.Middleware;
 using PRN232_FA25_Assignment_G7.API.SignalR;
 using PRN232_FA25_Assignment_G7.Repositories;
+using PRN232_FA25_Assignment_G7.Repositories.Entities;
 using PRN232_FA25_Assignment_G7.Repositories.Extensions;
 using PRN232_FA25_Assignment_G7.Services;
 
@@ -73,6 +74,41 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+
+// Ensure database is migrated and sync Examiner records from Users on startup
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var db = services.GetRequiredService<ApplicationDbContext>();
+        // Apply any pending migrations
+        db.Database.Migrate();
+
+        // Create Examiner rows for any Users with Role.Examiner that don't have a matching Examiner
+        var examinerUsers = db.Users.Where(u => u.Role == Role.Examiner).ToList();
+        foreach (var user in examinerUsers)
+        {
+            var exists = db.Examiners.Any(e => e.Id == user.Id || e.Email.ToLower() == user.Email.ToLower());
+            if (!exists)
+            {
+                db.Examiners.Add(new Examiner
+                {
+                    Id = user.Id,
+                    FullName = user.FullName,
+                    Email = user.Email
+                });
+            }
+        }
+
+        db.SaveChanges();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger("Startup");
+        logger?.LogError(ex, "An error occurred migrating or seeding the database.");
+    }
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();

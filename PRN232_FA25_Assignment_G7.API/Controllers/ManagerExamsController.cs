@@ -34,13 +34,14 @@ public class ManagerExamsController : ControllerBase
         var exam = await _context.Exams.FindAsync(id);
         if (exam == null) return NotFound();
 
-        // Assuming ExamExaminer table exists, but since not, perhaps use a different way.
-        // For now, return all examiners as assigned if they have subjects matching.
-        var examiners = await _context.Examiners
-            .Include(e => e.ExaminerSubjects)
-            .Where(e => e.ExaminerSubjects.Any(es => es.SubjectId == exam.SubjectId))
+        // Return examiners that are assigned to this exam via the join table
+        var assigned = await _context.ExamExaminers
+            .Include(ee => ee.Examiner)
+            .Where(ee => ee.ExamId == id)
+            .Select(ee => ee.Examiner!)
             .ToListAsync();
-        return Ok(examiners);
+
+        return Ok(assigned);
     }
 
     [HttpGet("{id:guid}/unassigned-examiners")]
@@ -49,13 +50,16 @@ public class ManagerExamsController : ControllerBase
         var exam = await _context.Exams.FindAsync(id);
         if (exam == null) return NotFound();
 
-        var assigned = await GetAssignedExaminers(id);
-        var assignedIds = assigned.Value?.Select(e => e.Id).ToList() ?? new List<Guid>();
+        var assignedIds = await _context.ExamExaminers
+            .Where(ee => ee.ExamId == id)
+            .Select(ee => ee.ExaminerId)
+            .ToListAsync();
 
         var unassigned = await _context.Examiners
             .Include(e => e.ExaminerSubjects)
             .Where(e => !assignedIds.Contains(e.Id) && e.ExaminerSubjects.Any(es => es.SubjectId == exam.SubjectId))
             .ToListAsync();
+
         return Ok(unassigned);
     }
 
@@ -65,7 +69,7 @@ public class ManagerExamsController : ControllerBase
         var exam = await _context.Exams.FindAsync(id);
         if (exam == null) return NotFound();
 
-        // For now, just validate examiners exist.
+        // Validate examiners exist
         var examiners = await _context.Examiners
             .Where(e => request.ExaminerIds.Contains(e.Id))
             .ToListAsync();
@@ -73,10 +77,27 @@ public class ManagerExamsController : ControllerBase
         if (examiners.Count != request.ExaminerIds.Count)
             return BadRequest("Some examiners not found");
 
-        // In real implementation, add to ExamExaminer table.
-        // Since not implemented, just return success.
+        var added = 0;
+        foreach (var examinerId in request.ExaminerIds)
+        {
+            var exists = await _context.ExamExaminers.AnyAsync(ee => ee.ExamId == id && ee.ExaminerId == examinerId);
+            if (exists) continue;
 
-        return Ok(new { success = true, assigned = examiners.Count });
+            var assignment = new ExamExaminer
+            {
+                ExamId = id,
+                ExaminerId = examinerId,
+                AssignedAt = DateTime.UtcNow,
+                IsPrimaryGrader = true
+            };
+
+            _context.ExamExaminers.Add(assignment);
+            added++;
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { success = true, assigned = added });
     }
 
     public record AssignExaminersRequest(List<Guid> ExaminerIds);
