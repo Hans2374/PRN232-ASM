@@ -273,11 +273,42 @@
 
         <ul class="nav-menu">
             <li class="nav-item">
-                <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString() == "/Admin/Index" ? "active" : "")" 
-                   asp-page="/Admin/Index">
-                    <span class="nav-icon">🏠</span>
-                    Dashboard
-                </a>
+                @* Role-specific dashboard link *@
+                @if (User.IsInRole("Admin"))
+                {
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString() == "/Admin/Dashboard" ? "active" : "")" asp-page="/Admin/Dashboard">
+                        <span class="nav-icon">🏠</span>
+                        Dashboard
+                    </a>
+                }
+                else if (User.IsInRole("Manager"))
+                {
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString() == "/Manager/Dashboard" ? "active" : "")" asp-page="/Manager/Dashboard">
+                        <span class="nav-icon">🏠</span>
+                        Dashboard
+                    </a>
+                }
+                else if (User.IsInRole("Moderator"))
+                {
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString() == "/Moderator/Dashboard" ? "active" : "")" asp-page="/Moderator/Dashboard">
+                        <span class="nav-icon">🏠</span>
+                        Dashboard
+                    </a>
+                }
+                else if (User.IsInRole("Examiner"))
+                {
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString() == "/Examiner/Dashboard" ? "active" : "")" asp-page="/Examiner/Dashboard">
+                        <span class="nav-icon">🏠</span>
+                        Dashboard
+                    </a>
+                }
+                else
+                {
+                    <a class="nav-link" asp-page="/Index">
+                        <span class="nav-icon">🏠</span>
+                        Dashboard
+                    </a>
+                }
             </li>
 
             @if (User.IsInRole("Admin"))
@@ -317,36 +348,56 @@
                         Summary Reports
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Admin/Approvals") == true ? "active" : "")" 
-                       asp-page="/Admin/Approvals/Index">
-                        <span class="nav-icon">✅</span>
-                        Approve Results
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Admin/Violations") == true ? "active" : "")" 
-                       asp-page="/Admin/Violations/Index">
-                        <span class="nav-icon">⚠️</span>
-                        Violations
-                    </a>
-                </li>
             }
 
             @if (User.IsInRole("Manager"))
             {
                 <li class="nav-item">
-                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Manager/Exams") == true ? "active" : "")" 
-                       asp-page="/Manager/Exams/Index">
-                        <span class="nav-icon">📝</span>
-                        Exam Management
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Manager/Examiners") == true ? "active" : "")"
+                       asp-page="/Manager/Examiners/Assign">
+                        <span class="nav-icon">👥</span>
+                        Assign Examiners
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Manager/Reports") == true ? "active" : "")" 
-                       asp-page="/Manager/Reports/Index">
-                        <span class="nav-icon">📊</span>
-                        Reports
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Manager/Violations") == true ? "active" : "")"
+                       asp-page="/Manager/Violations/Index">
+                        <span class="nav-icon">⚠️</span>
+                        Violation Management
+                    </a>
+                </li>
+            }
+
+            @if (User.IsInRole("Moderator"))
+            {
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Moderator/Complaints") == true ? "active" : "")"
+                       asp-page="/Moderator/Complaints/Index">
+                        <span class="nav-icon">📞</span>
+                        Complaints
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Moderator/Verification") == true ? "active" : "")"
+                       asp-page="/Moderator/Verification/Index">
+                        <span class="nav-icon">✅</span>
+                        Verification
+                    </a>
+                </li>
+            }
+
+            @if (User.IsInRole("Examiner"))
+            {
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Examiner/Submissions") == true ? "active" : "")" asp-page="/Examiner/Submissions/Index">
+                        <span class="nav-icon">📂</span>
+                        Submissions
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Page"]?.ToString()?.Contains("/Examiner/DoubleGrading") == true ? "active" : "")" asp-page="/Examiner/DoubleGrading/Index">
+                        <span class="nav-icon">🔄</span>
+                        Double Grading
                     </a>
                 </li>
             }

@@ -1,0 +1,169 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.DashboardModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="mb-4">
+    <h2>Admin Dashboard</h2>
+    <p class="text-muted">Welcome, <strong>@Model.CurrentUser?.FullName</strong></p>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-warning">@TempData["AuthError"]</div>
+}
+
+@if (Model.Dashboard != null)
+{
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Users</h5>
+                    <p class="card-text display-4">@Model.Dashboard.TotalUsers</p>
+                    <small>@Model.Dashboard.ActiveUsers active</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Exams</h5>
+                    <p class="card-text display-4">@Model.Dashboard.TotalExams</p>
+                    <small>@Model.Dashboard.TotalSubjects subjects</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Submissions</h5>
+                    <p class="card-text display-4">@Model.Dashboard.TotalSubmissions</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Reviews</h5>
+                    <p class="card-text display-4">@Model.Dashboard.PendingReviews</p>
+                    <small>@Model.Dashboard.PendingViolations violations</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Recent Submissions</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Dashboard.RecentSubmissions != null && Model.Dashboard.RecentSubmissions.Any())
+            {
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Student Code</th>
+                            <th>Exam</th>
+                            <th>Submitted At</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var submission in Model.Dashboard.RecentSubmissions)
+                        {
+                            <tr>
+                                <td>@submission.StudentCode</td>
+                                <td>@submission.ExamName</td>
+                                <td>@submission.SubmittedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    <span class="badge bg-@(submission.Status == "Pending" ? "warning" : submission.Status == "Graded" ? "success" : "info")">
+                                        @submission.Status
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="text-muted">No recent submissions</p>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">Loading dashboard data...</div>
+}
+
+<div style="margin-bottom: 30px;">
+    <h3 style="color: #2d3748; margin-bottom: 8px;">Welcome to the Admin Portal</h3>
+    <p style="color: #718096;">Logged in as <strong>@Model.CurrentUser?.FullName</strong> (@Model.CurrentUser?.Role)</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+    @if (User.IsInRole("Admin"))
+    {
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 24px; border-radius: 8px; color: white;">
+            <div style="font-size: 32px; margin-bottom: 8px;">👥</div>
+            <div style="font-size: 14px; opacity: 0.9;">User Management</div>
+            <div style="font-size: 24px; font-weight: bold; margin-top: 8px;">Full Access</div>
+        </div>
+    }
+
+    @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+    {
+        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 24px; border-radius: 8px; color: white;">
+            <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
+            <div style="font-size: 14px; opacity: 0.9;">Reports</div>
+            <div style="font-size: 24px; font-weight: bold; margin-top: 8px;">Available</div>
+        </div>
+    }
+
+    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 24px; border-radius: 8px; color: white;">
+        <div style="font-size: 32px; margin-bottom: 8px;">📝</div>
+        <div style="font-size: 14px; opacity: 0.9;">Exams</div>
+        <div style="font-size: 24px; font-weight: bold; margin-top: 8px;">View</div>
+    </div>
+</div>
+
+<div style="background: #f7fafc; padding: 24px; border-radius: 8px; border-left: 4px solid #667eea;">
+    <h4 style="color: #2d3748; margin-bottom: 12px;">🔐 Your Permissions</h4>
+    <ul style="color: #4a5568; line-height: 1.8;">
+        @if (User.IsInRole("Admin"))
+        {
+            <li>✅ Full system access</li>
+            <li>✅ Manage users (Create, Update, Delete)</li>
+            <li>✅ Assign roles</li>
+            <li>✅ View all reports</li>
+        }
+        else if (User.IsInRole("Manager"))
+        {
+            <li>✅ View dashboard</li>
+            <li>✅ View reports</li>
+            <li>❌ Cannot manage users</li>
+        }
+        else if (User.IsInRole("Moderator"))
+        {
+            <li>✅ View dashboard</li>
+            <li>✅ View exams</li>
+            <li>❌ Cannot manage users</li>
+            <li>❌ Limited reporting access</li>
+        }
+        else if (User.IsInRole("Examiner"))
+        {
+            <li>✅ View dashboard</li>
+            <li>✅ View exams</li>
+            <li>❌ Cannot manage users</li>
+            <li>❌ No reporting access</li>
+        }
+    </ul>
+</div>

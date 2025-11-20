@@ -1,0 +1,120 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Manager.Violations.IndexModel
+@{
+    ViewData["Title"] = "Violation Management";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">Violation Management</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Pending Violations</h5>
+                </div>
+                <div class="card-body">
+                    <div id="violations-list">
+                        <!-- Violations will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/signalr/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl('/submissionHub')
+            .build();
+
+        connection.on('ViolationReported', function (data) {
+            loadViolations();
+        });
+
+        connection.start().catch(function (err) {
+            return console.error(err.toString());
+        });
+
+        function loadViolations() {
+            fetch('/api/manager/violations')
+                .then(response => response.json())
+                .then(violations => {
+                    displayViolations(violations);
+                })
+                .catch(error => console.error('Error loading violations:', error));
+        }
+
+        function displayViolations(violations) {
+            const container = document.getElementById('violations-list');
+            container.innerHTML = violations.map(violation => `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Violation: ${violation.reason}</h5>
+                        <p class="card-text">Examiner: ${violation.examinerName}</p>
+                        <p class="card-text"><small class="text-muted">Submission ID: ${violation.submissionId}</small></p>
+                        <div class="btn-group">
+                            <button class="btn btn-success btn-sm" onclick="respondToViolation('${violation.violationId}', 'approve')">Approve</button>
+                            <button class="btn btn-danger btn-sm" onclick="respondToViolation('${violation.violationId}', 'reject')">Reject</button>
+                            <button class="btn btn-warning btn-sm" onclick="respondToViolation('${violation.violationId}', 'escalate')">Escalate</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function respondToViolation(violationId, decision) {
+            const comment = prompt('Enter comments (optional):') || '';
+            fetch(`/api/manager/violations/${violationId}/decision`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ decision, comment })
+            })
+            .then(response => {
+                if (response.ok) {
+                    loadViolations();
+                } else {
+                    alert('Error submitting decision');
+                }
+            })
+            .catch(error => console.error('Error submitting decision:', error));
+        }
+
+        // Load violations on page load
+        loadViolations();
+    </script>
+}
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">No violations to review.</div>
+}
+
+<script>
+    function respondToViolation(violationId, action) {
+        const actions = {
+            'approve': 'approve this violation',
+            'reject': 'reject this violation',
+            'escalate': 'escalate this violation to Admin'
+        };
+        if (confirm(`Are you sure you want to ${actions[action]}?`)) {
+            // Implement AJAX call to respond
+            alert(`${action} action for violation ${violationId}`);
+        }
+    }
+</script>

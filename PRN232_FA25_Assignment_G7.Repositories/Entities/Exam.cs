@@ -16,4 +16,5 @@ public class Exam
     public Semester? Semester { get; set; }
     public ICollection<Rubric> Rubrics { get; set; } = new List<Rubric>();
     public ICollection<Submission> Submissions { get; set; } = new List<Submission>();
+    public ICollection<ExamExaminer> ExamExaminers { get; set; } = new List<ExamExaminer>();
 }

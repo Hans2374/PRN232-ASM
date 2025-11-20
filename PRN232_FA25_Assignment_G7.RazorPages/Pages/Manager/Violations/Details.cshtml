@@ -1,0 +1,126 @@
+@page "{id:int}"
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Manager.Violations.DetailsModel
+@{
+    ViewData["Title"] = "Violation Details";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-warning">@TempData["AuthError"]</div>
+}
+
+@if (Model.Violation != null)
+{
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Violation Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Violation ID</dt>
+                        <dd class="col-sm-9">@Model.Violation.Id</dd>
+
+                        <dt class="col-sm-3">Submission ID</dt>
+                        <dd class="col-sm-9">@Model.Violation.SubmissionId</dd>
+
+                        <dt class="col-sm-3">Examiner</dt>
+                        <dd class="col-sm-9">@Model.Violation.ExaminerName</dd>
+
+                        <dt class="col-sm-3">Reason</dt>
+                        <dd class="col-sm-9">@Model.Violation.Reason</dd>
+
+                        <dt class="col-sm-3">Status</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge bg-@(Model.Violation.Status == "Pending Manager Review" ? "warning" : Model.Violation.Status == "Escalated to Admin" ? "danger" : "success")">@Model.Violation.Status</span>
+                        </dd>
+
+                        <dt class="col-sm-3">Reported At</dt>
+                        <dd class="col-sm-9">@Model.Violation.ReportedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                        <dt class="col-sm-3">Evidence</dt>
+                        <dd class="col-sm-9">@Model.Violation.Evidence</dd>
+                    </dl>
+                </div>
+            </div>
+
+            @if (Model.Violation.Timeline != null && Model.Violation.Timeline.Any())
+            {
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>Timeline</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            @foreach (var item in Model.Violation.Timeline.OrderByDescending(t => t.Timestamp))
+                            {
+                                <li class="list-group-item">
+                                    <strong>@item.Timestamp.ToString("yyyy-MM-dd HH:mm")</strong> - @item.Action by @item.Actor
+                                    @if (!string.IsNullOrEmpty(item.Details))
+                                    {
+                                        <br /><small class="text-muted">@item.Details</small>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-md-4">
+            @if (Model.Violation.Status == "Pending Manager Review")
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Manager Decision</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            <div class="mb-3">
+                                <label for="Action" class="form-label">Decision</label>
+                                <select class="form-select" id="Action" name="Action" asp-for="Action" required>
+                                    <option value="">Select action...</option>
+                                    <option value="approve">Approve Violation</option>
+                                    <option value="reject">Reject Violation</option>
+                                    <option value="escalate">Escalate to Admin</option>
+                                </select>
+                                <span asp-validation-for="Action" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="Comments" class="form-label">Comments</label>
+                                <textarea class="form-control" id="Comments" name="Comments" rows="3" asp-for="Comments" maxlength="500"></textarea>
+                                <span asp-validation-for="Comments" class="text-danger"></span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Submit Decision</button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    This violation has already been reviewed.
+                </div>
+            }
+
+            <div class="mt-3">
+                <a asp-page="./Index" class="btn btn-secondary">Back to Violations</a>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">Violation not found.</div>
+}

@@ -172,4 +172,22 @@ public class AuthSession
             return false;
         }
     }
+
+    /// <summary>
+    /// Check if the current user is in the Examiner role
+    /// </summary>
+    public bool IsExaminer(HttpContext httpContext)
+    {
+        var role = GetRoleFromToken();
+        return role == "Examiner";
+    }
+
+    /// <summary>
+    /// Check if the current user is in the specified role
+    /// </summary>
+    public bool IsInRole(HttpContext httpContext, string role)
+    {
+        var userRole = GetRoleFromToken();
+        return userRole == role;
+    }
 }

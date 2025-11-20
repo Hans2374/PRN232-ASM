@@ -1,0 +1,102 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Manager.DashboardModel
+@{
+    ViewData["Title"] = "Manager Dashboard";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-warning">@TempData["AuthError"]</div>
+}
+
+@if (Model.Data != null)
+{
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Exams</h5>
+                    <p class="card-text fs-2">@Model.Data.TotalExams</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-info mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Total Examiners</h5>
+                    <p class="card-text fs-2">@Model.Data.TotalExaminers</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Submissions</h5>
+                    <p class="card-text fs-2">@Model.Data.PendingSubmissions</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-warning mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Violations Pending</h5>
+                    <p class="card-text fs-2">@Model.Data.ViolationsPending</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Exam Grading Progress</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Data.ExamsProgress.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Exam Name</th>
+                                        <th>Graded</th>
+                                        <th>Pending</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var exam in Model.Data.ExamsProgress)
+                                    {
+                                        <tr>
+                                            <td>@exam.ExamName</td>
+                                            <td>@exam.Graded</td>
+                                            <td>@exam.Pending</td>
+                                            <td>@(exam.Graded + exam.Pending)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p>No exams found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+                </div>
+            </div>
+        </div>
+    </div>
+}

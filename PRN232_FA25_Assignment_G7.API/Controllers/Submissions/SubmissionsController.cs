@@ -7,6 +7,8 @@ using PRN232_FA25_Assignment_G7.API.SignalR;
 using PRN232_FA25_Assignment_G7.Repositories;
 using PRN232_FA25_Assignment_G7.Repositories.Entities;
 using PRN232_FA25_Assignment_G7.Services.Helpers;
+using PRN232_FA25_Assignment_G7.Services.Interfaces;
+using PRN232_FA25_Assignment_G7.Services.DTOs.Submission;
 
 namespace PRN232_FA25_Assignment_G7.API.Controllers;
 
@@ -22,6 +24,7 @@ public class SubmissionsController : ControllerBase
     private readonly ViolationDetector _violationDetector;
     private readonly DuplicateChecker _duplicateChecker;
     private readonly WordImageExtractor _wordImageExtractor;
+    private readonly IBulkUploadService _bulkUploadService;
 
     public SubmissionsController(
         ApplicationDbContext context,
@@ -30,7 +33,8 @@ public class SubmissionsController : ControllerBase
         FileProcessingHelper fileHelper,
         ViolationDetector violationDetector,
         DuplicateChecker duplicateChecker,
-        WordImageExtractor wordImageExtractor)
+        WordImageExtractor wordImageExtractor,
+        IBulkUploadService bulkUploadService)
     {
         _context = context;
         _hubContext = hubContext;
@@ -39,10 +43,11 @@ public class SubmissionsController : ControllerBase
         _violationDetector = violationDetector;
         _duplicateChecker = duplicateChecker;
         _wordImageExtractor = wordImageExtractor;
+        _bulkUploadService = bulkUploadService;
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<SubmissionResponse>> Get(Guid id, CancellationToken ct)
+    public async Task<ActionResult<PRN232_FA25_Assignment_G7.API.DTOs.SubmissionResponse>> Get(Guid id, CancellationToken ct)
     {
         var submission = await _context.Submissions
             .Include(s => s.Exam)
@@ -51,7 +56,7 @@ public class SubmissionsController : ControllerBase
 
         if (submission == null) return NotFound();
 
-        var response = new SubmissionResponse(
+        var response = new PRN232_FA25_Assignment_G7.API.DTOs.SubmissionResponse(
             submission.Id,
             submission.ExamId,
             submission.Exam?.Name ?? string.Empty,
@@ -67,7 +72,7 @@ public class SubmissionsController : ControllerBase
     }
 
     [HttpGet("exam/{examId:guid}")]
-    public async Task<ActionResult<IReadOnlyList<SubmissionResponse>>> GetByExam(Guid examId, CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<PRN232_FA25_Assignment_G7.API.DTOs.SubmissionResponse>>> GetByExam(Guid examId, CancellationToken ct)
     {
         var submissions = await _context.Submissions
             .Include(s => s.Exam)
@@ -75,7 +80,7 @@ public class SubmissionsController : ControllerBase
             .Where(s => s.ExamId == examId)
             .ToListAsync(ct);
 
-        var response = submissions.Select(s => new SubmissionResponse(
+        var response = submissions.Select(s => new PRN232_FA25_Assignment_G7.API.DTOs.SubmissionResponse(
             s.Id,
             s.ExamId,
             s.Exam?.Name ?? string.Empty,
@@ -92,8 +97,7 @@ public class SubmissionsController : ControllerBase
 
     [HttpPost("upload")]
     [Authorize(Roles = "Admin,Manager,Moderator,Examiner")]
-    [RequestSizeLimit(100_000_000)] //100MB
-    public async Task<ActionResult<SubmissionResponse>> Upload([FromForm] ProcessSubmissionRequest request, CancellationToken ct)
+    public async Task<ActionResult<PRN232_FA25_Assignment_G7.API.DTOs.SubmissionResponse>> Upload([FromForm] PRN232_FA25_Assignment_G7.API.DTOs.ProcessSubmissionRequest request, CancellationToken ct)
     {
         var exam = await _context.Exams.FindAsync([request.ExamId], ct);
         if (exam == null) return BadRequest("Exam not found.");
@@ -145,10 +149,12 @@ public class SubmissionsController : ControllerBase
             {
                 Id = Guid.NewGuid(),
                 SubmissionId = submission.Id,
-                Type = d.Type,
+                ViolationType = Enum.Parse<ViolationType>(d.Type),
                 Description = d.Description,
-                Severity = d.Severity,
-                IsZeroScore = d.IsZeroScore
+                Severity = (ViolationSeverity)d.Severity,
+                Status = ViolationStatus.New,
+                CreatedBy = Guid.Empty, // TODO: Get current user ID
+                CreatedAt = DateTime.UtcNow
             };
             violationEntities.Add(ve);
         }
@@ -165,8 +171,8 @@ public class SubmissionsController : ControllerBase
                 {
                     SubmissionId = submission.Id,
                     StudentCode = submission.StudentCode,
-                    ViolationType = v.Type,
-                    IsZeroScore = v.IsZeroScore,
+                    ViolationType = v.ViolationType.ToString(),
+                    Severity = v.Severity,
                     Timestamp = DateTime.UtcNow
                 }, ct).ConfigureAwait(false);
             }
@@ -216,10 +222,12 @@ public class SubmissionsController : ControllerBase
                 {
                     Id = Guid.NewGuid(),
                     SubmissionId = submission.Id,
-                    Type = "Plagiarism",
+                    ViolationType = ViolationType.Plagiarism,
                     Description = $"Similarity {bestSim:P0} with submission {other.Id} (files: {Path.GetFileName(myFilePath ?? "")} vs {Path.GetFileName(otherFilePath ?? "")})",
-                    Severity = (int)Math.Round(bestSim *10),
-                    IsZeroScore = bestSim >=0.9
+                    Severity = bestSim >= 0.9 ? ViolationSeverity.Critical : bestSim >= 0.7 ? ViolationSeverity.High : ViolationSeverity.Medium,
+                    Status = ViolationStatus.New,
+                    CreatedBy = Guid.Empty, // TODO: Get current user ID
+                    CreatedAt = DateTime.UtcNow
                 };
                 _context.Violations.Add(dupViolation);
                 await _context.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -252,7 +260,7 @@ public class SubmissionsController : ControllerBase
             Timestamp = DateTime.UtcNow
         }, ct).ConfigureAwait(false);
 
-        var response = new SubmissionResponse(
+        var response = new PRN232_FA25_Assignment_G7.API.DTOs.SubmissionResponse(
             submission.Id,
             submission.ExamId,
             exam.Name,
@@ -269,9 +277,90 @@ public class SubmissionsController : ControllerBase
         return CreatedAtAction(nameof(Get), new { id = submission.Id }, response);
     }
 
+    [HttpPost("bulk-upload")]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<ActionResult<BulkUploadResult>> BulkUpload([FromForm] Guid examId, [FromForm] IFormFile file, CancellationToken ct)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("Archive file is required");
+
+        // Validate file extension
+        var allowedExtensions = new[] { ".rar", ".zip", ".7z", ".tar", ".gz" };
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!allowedExtensions.Contains(extension))
+            return BadRequest("Only RAR, ZIP, 7Z, TAR, and GZ archives are supported");
+
+        // Check file size against configured limit
+        var maxUploadBytes = 1073741824L; // 1GB default for bulk uploads
+        if (file.Length > maxUploadBytes)
+            return BadRequest($"Archive file too large. Maximum allowed size is {maxUploadBytes / (1024 * 1024 * 1024):F1}GB.");
+
+        // Validate exam exists
+        var exam = await _context.Exams.FindAsync([examId], ct);
+        if (exam == null)
+            return BadRequest("Exam not found");
+
+        // Save the uploaded archive temporarily
+        var tempFilePath = Path.Combine(Path.GetTempPath(), $"bulk_upload_{Guid.NewGuid()}{extension}");
+        try
+        {
+            await using (var stream = new FileStream(tempFilePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream, ct);
+            }
+
+            // Create bulk upload request
+            var bulkRequest = new BulkUploadRequest(examId, tempFilePath, file.FileName);
+
+            // Create progress reporter
+            var progress = new Progress<BulkUploadProgress>(p =>
+            {
+                _hubContext.Clients.All.SendAsync("BulkUploadProgress", new
+                {
+                    ExamId = examId,
+                    Status = p.Status,
+                    TotalFiles = p.TotalFiles,
+                    ProcessedFiles = p.ProcessedFiles,
+                    ViolationsFound = p.ViolationsFound,
+                    DuplicatesFound = p.DuplicatesFound,
+                    Errors = p.Errors
+                }, ct).ConfigureAwait(false);
+            });
+
+            // Process bulk upload
+            var result = await _bulkUploadService.ProcessBulkUploadAsync(bulkRequest, progress, ct);
+
+            // Broadcast completion
+            await _hubContext.Clients.All.SendAsync("BulkUploadCompleted", new
+            {
+                ExamId = examId,
+                Result = result
+            }, ct).ConfigureAwait(false);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Bulk upload failed for exam {ExamId}", examId);
+            return StatusCode(500, $"Bulk upload failed: {ex.Message}");
+        }
+        finally
+        {
+            // Cleanup temp file
+            try
+            {
+                if (System.IO.File.Exists(tempFilePath)) System.IO.File.Delete(tempFilePath);
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
+        }
+    }
+
     [HttpPost("{id:guid}/score")]
     [Authorize(Roles = "Admin,Manager,Moderator,Examiner")]
-    public async Task<ActionResult<SubmissionScoringResult>> Score(Guid id, [FromBody] decimal score, CancellationToken ct)
+    public async Task<ActionResult<PRN232_FA25_Assignment_G7.API.DTOs.SubmissionScoringResult>> Score(Guid id, [FromBody] decimal score, CancellationToken ct)
     {
         var submission = await _context.Submissions
             .Include(s => s.Violations)
@@ -279,21 +368,21 @@ public class SubmissionsController : ControllerBase
 
         if (submission == null) return NotFound();
 
-        var hasZeroScoreViolation = submission.Violations.Any(v => v.IsZeroScore);
+        var hasZeroScoreViolation = submission.Violations.Any(v => v.Severity == ViolationSeverity.Critical && v.Status == ViolationStatus.Resolved);
         if (hasZeroScoreViolation)
         {
-            submission.Score =0;
+            submission.Score = 0;
             await _context.SaveChangesAsync(ct);
 
             await _hubContext.Clients.All.SendAsync("SubmissionGraded", new
             {
                 SubmissionId = submission.Id,
                 StudentCode = submission.StudentCode,
-                Score =0m,
+                Score = 0m,
                 Timestamp = DateTime.UtcNow
             }, ct);
 
-            return Ok(new SubmissionScoringResult(submission.Id,0, true, "Zero score due to violation."));
+            return Ok(new PRN232_FA25_Assignment_G7.API.DTOs.SubmissionScoringResult(submission.Id, 0, true, "Zero score due to violation."));
         }
 
         submission.Score = score;
@@ -307,6 +396,137 @@ public class SubmissionsController : ControllerBase
             Timestamp = DateTime.UtcNow
         }, ct);
 
-        return Ok(new SubmissionScoringResult(submission.Id, score, false, string.Empty));
+        return Ok(new PRN232_FA25_Assignment_G7.API.DTOs.SubmissionScoringResult(submission.Id, score, false, string.Empty));
+    }
+
+    [HttpGet("{id:guid}/detail")]
+    public async Task<ActionResult<SubmissionDetailResponse>> GetDetail(Guid id, CancellationToken ct)
+    {
+        var submission = await _context.Submissions
+            .Include(s => s.Exam)
+            .Include(s => s.Violations)
+            .FirstOrDefaultAsync(s => s.Id == id, ct);
+
+        if (submission == null) return NotFound();
+
+        var response = new SubmissionDetailResponse(
+            submission.Id,
+            submission.ExamId,
+            submission.Exam?.Name ?? string.Empty,
+            submission.StudentCode,
+            submission.OriginalFileName,
+            submission.ExtractedFolderPath,
+            submission.Score,
+            submission.SecondScore,
+            submission.CreatedAt,
+            submission.SubmissionStatus.ToString(),
+            submission.ReviewStatus.ToString(),
+            submission.GradingComments,
+            submission.SecondGradingComments,
+            submission.ModeratorComments,
+            submission.AdminComments,
+            submission.GradedAt,
+            submission.SecondGradedAt,
+            submission.Violations.Count
+        );
+
+        return Ok(response);
+    }
+
+    [HttpPost("{id:guid}/grade")]
+    [Authorize(Roles = "Examiner")]
+    public async Task<IActionResult> Grade(Guid id, [FromBody] GradeSubmissionRequest request, CancellationToken ct)
+    {
+        var submission = await _context.Submissions.FindAsync([id], ct);
+        if (submission == null) return NotFound();
+
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        submission.Score = request.Score;
+        submission.GradingComments = request.Comments;
+        submission.GradedBy = Guid.Parse(userId);
+        submission.GradedAt = DateTime.UtcNow;
+        submission.SubmissionStatus = SubmissionStatus.Graded;
+
+        await _context.SaveChangesAsync(ct);
+
+        await _hubContext.Clients.All.SendAsync("SubmissionGraded", new
+        {
+            SubmissionId = submission.Id,
+            StudentCode = submission.StudentCode,
+            Score = request.Score,
+            Timestamp = DateTime.UtcNow
+        }, ct);
+
+        return Ok();
+    }
+
+    [HttpPost("{id:guid}/double-grade")]
+    [Authorize(Roles = "Examiner")]
+    public async Task<IActionResult> DoubleGrade(Guid id, [FromBody] DoubleGradeRequest request, CancellationToken ct)
+    {
+        var submission = await _context.Submissions.FindAsync([id], ct);
+        if (submission == null) return NotFound();
+
+        if (submission.SubmissionStatus != SubmissionStatus.Graded)
+            return BadRequest("Submission must be graded first");
+
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        if (submission.GradedBy == Guid.Parse(userId))
+            return BadRequest("Cannot double-grade your own submission");
+
+        submission.SecondScore = request.SecondScore;
+        submission.SecondGradingComments = request.Comments;
+        submission.SecondGradedBy = Guid.Parse(userId);
+        submission.SecondGradedAt = DateTime.UtcNow;
+        submission.SubmissionStatus = SubmissionStatus.DoubleGraded;
+
+        await _context.SaveChangesAsync(ct);
+
+        return Ok();
+    }
+
+    [HttpPost("{id:guid}/moderator-adjust-score")]
+    [Authorize(Roles = "Moderator")]
+    public async Task<IActionResult> ModeratorAdjustScore(Guid id, [FromBody] AdjustScoreRequest request, CancellationToken ct)
+    {
+        var submission = await _context.Submissions.FindAsync([id], ct);
+        if (submission == null) return NotFound();
+
+        submission.Score = request.NewScore;
+        submission.ModeratorComments = request.Reason;
+        submission.ReviewStatus = ReviewStatus.Completed;
+
+        await _context.SaveChangesAsync(ct);
+
+        return Ok();
+    }
+
+    [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<ActionResult<IReadOnlyList<PRN232_FA25_Assignment_G7.API.DTOs.SubmissionResponse>>> GetAll(CancellationToken ct)
+    {
+        var submissions = await _context.Submissions
+            .Include(s => s.Exam)
+            .Include(s => s.Violations)
+            .OrderByDescending(s => s.CreatedAt)
+            .ToListAsync(ct);
+
+        var response = submissions.Select(s => new PRN232_FA25_Assignment_G7.API.DTOs.SubmissionResponse(
+            s.Id,
+            s.ExamId,
+            s.Exam?.Name ?? string.Empty,
+            s.StudentCode,
+            s.OriginalFileName,
+            s.ExtractedFolderPath,
+            s.Score,
+            s.CreatedAt,
+            s.Violations.Count
+        )).ToList();
+
+        return Ok(response);
     }
 }

@@ -1,0 +1,58 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Exams.EditModel
+@{
+    ViewData["Title"] = "Edit Exam";
+}
+
+<h2>Edit Exam</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <form method="post">
+            <input type="hidden" asp-for="ExamInput.Id" />
+            
+            <div class="mb-3">
+                <label asp-for="ExamInput.Name" class="form-label"></label>
+                <input asp-for="ExamInput.Name" class="form-control" />
+                <span asp-validation-for="ExamInput.Name" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ExamInput.SubjectId" class="form-label">Subject</label>
+                <select asp-for="ExamInput.SubjectId" asp-items="Model.Subjects" class="form-select">
+                    <option value="">Select Subject</option>
+                </select>
+                <span asp-validation-for="ExamInput.SubjectId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ExamInput.SemesterId" class="form-label">Semester</label>
+                <select asp-for="ExamInput.SemesterId" asp-items="Model.Semesters" class="form-select">
+                    <option value="">Select Semester</option>
+                </select>
+                <span asp-validation-for="ExamInput.SemesterId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ExamInput.Description" class="form-label"></label>
+                <textarea asp-for="ExamInput.Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="ExamInput.Description" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ExamInput.ExamDate" class="form-label">Exam Date</label>
+                <input asp-for="ExamInput.ExamDate" type="datetime-local" class="form-control" />
+                <span asp-validation-for="ExamInput.ExamDate" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Update Exam</button>
+                <a asp-page="./Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

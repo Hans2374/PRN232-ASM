@@ -31,6 +31,17 @@ public class RubricsController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("{id:guid}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<RubricResponse>> Get(Guid id, CancellationToken ct)
+    {
+        var rubric = await _context.Rubrics.FindAsync([id], ct);
+        if (rubric == null) return NotFound();
+
+        var response = new RubricResponse(rubric.Id, rubric.ExamId, rubric.Criteria, rubric.MaxScore);
+        return Ok(response);
+    }
+
     [HttpPost]
     [Authorize(Roles = "Admin,Manager,Moderator")]
     public async Task<ActionResult<RubricResponse>> Create([FromBody] AddRubricRequest request, CancellationToken ct)
@@ -50,7 +61,23 @@ public class RubricsController : ControllerBase
         await _context.SaveChangesAsync(ct);
 
         var response = new RubricResponse(rubric.Id, rubric.ExamId, rubric.Criteria, rubric.MaxScore);
-        return CreatedAtAction(nameof(GetByExam), new { examId = rubric.ExamId }, response);
+        return CreatedAtAction(nameof(Get), new { id = rubric.Id }, response);
+    }
+
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<ActionResult<RubricResponse>> Update(Guid id, [FromBody] AddRubricRequest request, CancellationToken ct)
+    {
+        var rubric = await _context.Rubrics.FindAsync([id], ct);
+        if (rubric == null) return NotFound();
+
+        rubric.Criteria = request.Criteria;
+        rubric.MaxScore = request.MaxScore;
+
+        await _context.SaveChangesAsync(ct);
+
+        var response = new RubricResponse(rubric.Id, rubric.ExamId, rubric.Criteria, rubric.MaxScore);
+        return Ok(response);
     }
 
     [HttpDelete("{id:guid}")]

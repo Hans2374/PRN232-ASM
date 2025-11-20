@@ -1,3 +1,16 @@
+/*
+ * USER MANAGEMENT - LIST PAGE
+ * 
+ * API Configuration:
+ * - Ensure appsettings.json contains: "ApiSettings": { "BaseUrl": "https://localhost:53776" }
+ * - Change port 53776 to match your API's HTTPS port
+ * - API Endpoint: GET /api/admin/users
+ * 
+ * Authorization:
+ * - Only Admin role can access this page
+ * - Non-admin users will be redirected to /Account/Login
+ */
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -10,35 +23,77 @@ namespace PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Users;
 public class IndexModel : PageModel
 {
     private readonly ApiClient _apiClient;
+    private readonly ILogger<IndexModel> _logger;
 
-    public IndexModel(ApiClient apiClient)
+    public IndexModel(ApiClient apiClient, ILogger<IndexModel> logger)
     {
         _apiClient = apiClient;
+        _logger = logger;
     }
 
     public List<UserResponse> Users { get; set; } = new();
+    
+    [BindProperty(SupportsGet = true)]
+    public string? SearchTerm { get; set; }
+    
+    [BindProperty(SupportsGet = true)]
+    public string FilterMode { get; set; } = "All"; // All | Active | Inactive
 
     public async Task<IActionResult> OnGetAsync()
     {
         try
         {
-            Users = await _apiClient.GetUsersAsync();
+            _logger.LogInformation("Loading users list. SearchTerm: {SearchTerm}", SearchTerm ?? "None");
+            
+            var users = await _apiClient.GetUsersAsync();
+            Users = users ?? new List<UserResponse>();
+
+            // Apply filter mode for active/inactive/all
+            IEnumerable<UserResponse> filtered = Users;
+
+            if (FilterMode == "Active")
+            {
+                filtered = filtered.Where(u => u.IsActive);
+            }
+            else if (FilterMode == "Inactive")
+            {
+                filtered = filtered.Where(u => !u.IsActive);
+            }
+
+            // Client-side search filtering
+            if (!string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                filtered = filtered.Where(u =>
+                    u.Username.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    u.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    u.Email.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    u.Role.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
+                );
+            }
+
+            Users = filtered.ToList();
+
+            _logger.LogInformation("Loaded {Count} users", Users.Count);
             return Page();
         }
         catch (UnauthorizedAccessException ex)
         {
-            // Preserve intent to return to this page after login
-            TempData["AuthError"] = ex.Message;
-            return RedirectToPage("/Account/Login", new { returnUrl = Url.Page("/Admin/Users/Index") });
+            _logger.LogWarning(ex, "Unauthorized access to users list");
+            TempData["Error"] = "Your session has expired. Please login again.";
+            return RedirectToPage("/Account/Login");
         }
-        catch (HttpRequestException ex)
+        catch (ApiException ex)
         {
-            TempData["Error"] = $"Failed to load users. Error: {ex.Message}";
+            _logger.LogError(ex, "API error while loading users: {StatusCode}", ex.StatusCode);
+            TempData["Error"] = "Failed to load users. Please check that the API is running and accessible.";
+            Users = new List<UserResponse>();
             return Page();
         }
         catch (Exception ex)
         {
-            TempData["Error"] = $"An unexpected error occurred: {ex.Message}";
+            _logger.LogError(ex, "Unexpected error loading users");
+            TempData["Error"] = "An unexpected error occurred. Please try again or check the logs.";
+            Users = new List<UserResponse>();
             return Page();
         }
     }
@@ -47,20 +102,36 @@ public class IndexModel : PageModel
     {
         try
         {
+            _logger.LogInformation("Attempting to deactivate user {UserId}", id);
+            
             var success = await _apiClient.DeleteUserAsync(id);
-
+            
             if (success)
             {
                 TempData["Success"] = "User deactivated successfully.";
+                _logger.LogInformation("User {UserId} deactivated successfully", id);
             }
             else
             {
-                TempData["Error"] = "Failed to deactivate user.";
+                TempData["Error"] = "Failed to deactivate user. Please try again.";
+                _logger.LogWarning("Delete operation returned false for user {UserId}", id);
             }
         }
-        catch (Exception)
+        catch (UnauthorizedAccessException ex)
         {
-            TempData["Error"] = "An error occurred while deactivating the user.";
+            _logger.LogWarning(ex, "Unauthorized attempt to delete user {UserId}", id);
+            TempData["Error"] = "Your session has expired. Please login again.";
+            return RedirectToPage("/Account/Login");
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "API error while deleting user {UserId}: {StatusCode}", id, ex.StatusCode);
+            TempData["Error"] = "Failed to connect to API. Please ensure the API is running.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error deleting user {UserId}", id);
+            TempData["Error"] = "An unexpected error occurred while deleting the user.";
         }
 
         return RedirectToPage();

@@ -1,6 +1,18 @@
+/*
+ * USER MANAGEMENT - CREATE PAGE
+ * 
+ * API Configuration:
+ * - API Endpoint: POST /api/admin/users
+ * - Accepts CreateUserRequest and returns UserResponse
+ * 
+ * Authorization:
+ * - Only Admin role can access this page
+ */
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using PRN232_FA25_Assignment_G7.RazorPages.Models;
 using PRN232_FA25_Assignment_G7.RazorPages.Services;
 
@@ -10,59 +22,105 @@ namespace PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Users;
 public class CreateModel : PageModel
 {
     private readonly ApiClient _apiClient;
+    private readonly ILogger<CreateModel> _logger;
 
-    public CreateModel(ApiClient apiClient)
+    public CreateModel(ApiClient apiClient, ILogger<CreateModel> logger)
     {
         _apiClient = apiClient;
+        _logger = logger;
     }
 
     [BindProperty]
-    public CreateUserRequest UserRequest { get; set; } = new();
+    public CreateUserRequest UserInput { get; set; } = new();
+
+    public List<SelectListItem> AvailableRoles { get; set; } = new();
 
     public void OnGet()
     {
-        // Initialize page
+        _logger.LogInformation("Initializing Create User page");
+        LoadRoles();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
         {
+            LoadRoles();
             return Page();
         }
 
         try
         {
-            var result = await _apiClient.CreateUserAsync(UserRequest);
+            _logger.LogInformation("Attempting to create user: {Username}", UserInput.Username);
+            // Pre-check for duplicate username via API (includes inactive users)
+            var existing = await _apiClient.GetUsersAsync();
+            if (existing.Any(u => string.Equals(u.Username, UserInput.Username, StringComparison.OrdinalIgnoreCase)))
+            {
+                _logger.LogWarning("Username {Username} already exists (pre-check)", UserInput.Username);
+                ModelState.AddModelError("UserInput.Username", "This username is already taken. Please choose a different username.");
+                LoadRoles();
+                return Page();
+            }
+
+            var result = await _apiClient.CreateUserAsync(UserInput);
 
             if (result != null)
             {
                 TempData["Success"] = $"User '{result.Username}' created successfully.";
+                _logger.LogInformation("User {Username} created successfully with ID {UserId}", result.Username, result.Id);
                 return RedirectToPage("/Admin/Users/Index");
             }
             else
             {
-                TempData["Error"] = "Failed to create user.";
+                TempData["Error"] = "Failed to create user. No response from API.";
+                LoadRoles();
                 return Page();
             }
         }
-        catch (HttpRequestException ex)
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
-            // Parse error message from API
-            if (ex.Message.Contains("already taken"))
-            {
-                ModelState.AddModelError("UserRequest.Username", "This username is already taken.");
-            }
-            else
-            {
-                TempData["Error"] = "Failed to create user. Please check your input.";
-            }
+            _logger.LogWarning("Username {Username} already exists (API)", UserInput.Username);
+            ModelState.AddModelError("UserInput.Username", "This username is already taken. Please choose a different username.");
+            LoadRoles();
             return Page();
         }
-        catch (Exception)
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.BadRequest)
         {
-            TempData["Error"] = "An error occurred while creating the user.";
+            _logger.LogWarning(ex, "Bad request while creating user");
+            TempData["Error"] = "Invalid user data. Please check all fields and try again.";
+            LoadRoles();
             return Page();
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "Unauthorized attempt to create user");
+            TempData["Error"] = "Your session has expired. Please login again.";
+            return RedirectToPage("/Account/Login");
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "API error while creating user: {StatusCode}", ex.StatusCode);
+            TempData["Error"] = "Failed to create user due to API error. Please try again.";
+            LoadRoles();
+            return Page();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while creating user");
+            TempData["Error"] = "An unexpected error occurred. Please try again or contact support.";
+            LoadRoles();
+            return Page();
+        }
+    }
+
+    private void LoadRoles()
+    {
+        AvailableRoles = new List<SelectListItem>
+        {
+            new SelectListItem { Value = "Admin", Text = "Admin - Full system access" },
+            new SelectListItem { Value = "Manager", Text = "Manager - Exam and subject management" },
+            new SelectListItem { Value = "Moderator", Text = "Moderator - Review and approve submissions" },
+            new SelectListItem { Value = "Examiner", Text = "Examiner - Grade submissions" }
+        };
     }
 }

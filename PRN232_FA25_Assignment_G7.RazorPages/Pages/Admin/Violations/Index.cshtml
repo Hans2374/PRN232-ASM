@@ -1,0 +1,73 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Violations.IndexModel
+@{
+    ViewData["Title"] = "Violations";
+}
+
+
+<h2>Violations Management</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model.Violations.Any())
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Student</th>
+                <th>Exam</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Reviewed By</th>
+                <th>Created At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var violation in Model.Violations)
+            {
+                <tr>
+                    <td>@violation.Id</td>
+                    <td>@violation.StudentName</td>
+                    <td>@violation.ExamName</td>
+                    <td>@violation.Description</td>
+                    <td>
+                        @if (violation.ReviewStatus == "Pending")
+                        {
+                            <span class="badge bg-warning">@violation.ReviewStatus</span>
+                        }
+                        else if (violation.ReviewStatus == "ModeratorApproved")
+                        {
+                            <span class="badge bg-info">Moderator Approved</span>
+                        }
+                        else if (violation.ReviewStatus == "AdminApproved")
+                        {
+                            <span class="badge bg-success">Admin Approved</span>
+                        }
+                        else if (violation.ReviewStatus == "ModeratorRejected" || violation.ReviewStatus == "AdminRejected")
+                        {
+                            <span class="badge bg-danger">Rejected</span>
+                        }
+                    </td>
+                    <td>@(violation.ReviewedBy ?? "-")</td>
+                    <td>@violation.CreatedAt.ToString("g")</td>
+                    <td>
+                        <a asp-page="./Details" asp-route-id="@violation.Id" class="btn btn-sm btn-info">View Details</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">No violations found.</p>
+}

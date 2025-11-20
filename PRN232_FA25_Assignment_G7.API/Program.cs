@@ -4,10 +4,23 @@ using PRN232_FA25_Assignment_G7.API.Extensions;
 using PRN232_FA25_Assignment_G7.API.Middleware;
 using PRN232_FA25_Assignment_G7.API.SignalR;
 using PRN232_FA25_Assignment_G7.Repositories;
+using PRN232_FA25_Assignment_G7.Repositories.Entities;
 using PRN232_FA25_Assignment_G7.Repositories.Extensions;
 using PRN232_FA25_Assignment_G7.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Kestrel for large file uploads
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = long.MaxValue; // Allow unlimited request body size for large RAR archives
+});
+
+// Configure FormOptions for multipart uploads
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = long.MaxValue; // Allow unlimited multipart body size
+});
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -21,6 +34,15 @@ builder.Services.AddSwaggerConfiguration();
 
 // Authentication & Authorization
 builder.Services.AddJwtAuthentication(builder.Configuration);
+
+// Add role-based authorization policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("ManagerOnly", policy => policy.RequireRole("Manager"));
+    options.AddPolicy("ModeratorOnly", policy => policy.RequireRole("Moderator"));
+    options.AddPolicy("ExaminerOnly", policy => policy.RequireRole("Examiner"));
+});
 
 // Application services (Repositories + Services + AutoMapper)
 builder.Services.AddApplicationServices(builder.Configuration);
@@ -54,6 +76,41 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Ensure database is migrated and sync Examiner records from Users on startup
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var db = services.GetRequiredService<ApplicationDbContext>();
+        // Apply any pending migrations
+        db.Database.Migrate();
+
+        // Create Examiner rows for any Users with Role.Examiner that don't have a matching Examiner
+        var examinerUsers = db.Users.Where(u => u.Role == Role.Examiner).ToList();
+        foreach (var user in examinerUsers)
+        {
+            var exists = db.Examiners.Any(e => e.Id == user.Id || e.Email.ToLower() == user.Email.ToLower());
+            if (!exists)
+            {
+                db.Examiners.Add(new Examiner
+                {
+                    Id = user.Id,
+                    FullName = user.FullName,
+                    Email = user.Email
+                });
+            }
+        }
+
+        db.SaveChanges();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetService<ILoggerFactory>()?.CreateLogger("Startup");
+        logger?.LogError(ex, "An error occurred migrating or seeding the database.");
+    }
+}
+
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
@@ -65,5 +122,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<SubmissionHub>("/hubs/submission");
+app.MapHub<ImportHub>("/hubs/import");
 
 app.Run();

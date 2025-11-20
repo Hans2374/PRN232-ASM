@@ -5,15 +5,54 @@
 }
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-    <h3 style="color: #2d3748; margin: 0;">Users List</h3>
-    <a href="/Admin/Users/Create" class="btn btn-primary">+ Create New User</a>
+    <h3 style="color: #2d3748; margin: 0;">User Management</h3>
+    <a asp-page="Create" class="btn btn-primary">+ Create New User</a>
 </div>
 
-@if (!Model.Users.Any())
+<!-- Search Bar -->
+<form method="get" style="margin-bottom: 24px;">
+    <div style="display: flex; gap: 12px; max-width: 600px;">
+        <input type="text" 
+               name="SearchTerm" 
+               value="@Model.SearchTerm" 
+               placeholder="Search by username, name, email, or role..." 
+               style="flex: 1; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;" />
+        <button type="submit" class="btn btn-secondary">Search</button>
+        @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+        {
+            <a asp-page="Index" class="btn btn-secondary">Clear</a>
+        }
+    </div>
+</form>
+
+<!-- Filter controls -->
+<form method="get" style="margin-bottom: 16px;">
+    <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+    <div style="display:flex; gap:12px; align-items:center;">
+        <label style="font-weight:600; color:#2d3748;">Show:</label>
+        <select name="FilterMode" onchange="this.form.submit()" style="padding:8px 10px; border:1px solid #e2e8f0; border-radius:6px;">
+            <option value="All" selected="@(Model.FilterMode == "All")">All</option>
+            <option value="Active" selected="@(Model.FilterMode == "Active")">Active Only</option>
+            <option value="Inactive" selected="@(Model.FilterMode == "Inactive")">Inactive Only</option>
+        </select>
+        <span style="color:#718096; margin-left:8px;">Showing both active and inactive users by default</span>
+    </div>
+</form>
+
+@if (Model.Users.Count == 0 && string.IsNullOrWhiteSpace(Model.SearchTerm))
 {
-    <div style="text-align: center; padding: 60px 20px; color: #718096;">
+    <div style="text-align: center; padding: 60px 20px; color: #718096; background: #f7fafc; border-radius: 8px;">
         <div style="font-size: 48px; margin-bottom: 16px;">👥</div>
-        <p>No users found.</p>
+        <h4 style="color: #4a5568; margin-bottom: 12px;">No Users Found</h4>
+        <p style="margin-bottom: 24px;">Get started by creating your first user.</p>
+        <a asp-page="Create" class="btn btn-primary">Create User</a>
+    </div>
+}
+else if (Model.Users.Count == 0 && !string.IsNullOrWhiteSpace(Model.SearchTerm))
+{
+    <div style="text-align: center; padding: 40px; color: #718096; background: #f7fafc; border-radius: 8px;">
+        <p>No users found matching "<strong>@Model.SearchTerm</strong>"</p>
+        <a asp-page="Index" class="btn btn-secondary" style="margin-top: 16px;">Clear Search</a>
     </div>
 }
 else
@@ -26,44 +65,57 @@ else
                     <th>Full Name</th>
                     <th>Email</th>
                     <th>Role</th>
-                    <th>Status</th>
-                    <th>Created At</th>
-                    <th style="text-align: center;">Actions</th>
+                    <th style="width: 100px; text-align: center;">Status</th>
+                    <th style="width: 140px; text-align: center;">Created</th>
+                    <th style="width: 180px; text-align: center;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var user in Model.Users)
                 {
-                    <tr>
-                        <td><strong>@user.Username</strong></td>
+                    var rowStyle = user.IsActive ? "" : "opacity:0.6;";
+                    <tr style="@rowStyle">
+                        <td><strong>@user.Username</strong>
+                            @if (!user.IsActive)
+                            {
+                                <div style="margin-top:6px;">
+                                    <span class="badge" style="background: #cbd5e0; color: #2d3748;">Inactive</span>
+                                </div>
+                            }
+                        </td>
                         <td>@user.FullName</td>
                         <td>@user.Email</td>
                         <td>
-                            <span class="badge" style="background: 
-                                @(user.Role == "Admin" ? "#c6f6d5; color: #22543d" :
-                                  user.Role == "Manager" ? "#bee3f8; color: #2c5282" :
-                                  user.Role == "Moderator" ? "#feebc8; color: #7c2d12" :
-                                  "#e9d8fd; color: #44337a")">
+                            <span class="badge" style="background: @GetRoleBadgeColor(user.Role); color: white; padding: 4px 12px;">
                                 @user.Role
                             </span>
                         </td>
-                        <td>
+                        <td style="text-align: center;">
                             @if (user.IsActive)
                             {
                                 <span class="badge badge-success">Active</span>
                             }
                             else
                             {
-                                <span class="badge badge-danger">Inactive</span>
+                                <span class="badge" style="background: #cbd5e0; color: #2d3748;">Inactive</span>
                             }
                         </td>
-                        <td>@user.CreatedAt.ToString("MMM dd, yyyy")</td>
+                        <td style="text-align: center; font-size: 13px; color: #718096;">
+                            @user.CreatedAt.ToString("MMM dd, yyyy")
+                        </td>
                         <td style="text-align: center;">
-                            <a href="/Admin/Users/Edit/@user.Id" class="btn btn-secondary" style="margin-right: 8px; padding: 6px 12px; font-size: 13px;">Edit</a>
+                            <a asp-page="Edit" asp-route-id="@user.Id" class="btn btn-secondary" style="padding: 6px 14px; margin-right: 6px;">
+                                Edit
+                            </a>
                             @if (user.IsActive)
                             {
-                                <form method="post" style="display: inline;" asp-page-handler="Delete" asp-route-id="@user.Id" onsubmit="return confirm('Are you sure you want to deactivate this user?');">
-                                    <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;">Deactivate</button>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@user.Id" style="display: inline;">
+                                    <button type="submit" 
+                                            class="btn btn-danger" 
+                                            style="padding: 6px 14px;"
+                                            onclick="return confirm('Are you sure you want to deactivate @user.Username?');">
+                                        Deactivate
+                                    </button>
                                 </form>
                             }
                         </td>
@@ -72,4 +124,26 @@ else
             </tbody>
         </table>
     </div>
+
+    <div style="margin-top: 20px; padding: 12px; background: #f7fafc; border-radius: 6px; color: #4a5568; font-size: 14px;">
+        <strong>Total:</strong> @Model.Users.Count user(s)
+        @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+        {
+            <span style="margin-left: 16px;">| Filtered by: <strong>@Model.SearchTerm</strong></span>
+        }
+    </div>
+}
+
+@functions {
+    string GetRoleBadgeColor(string role)
+    {
+        return role switch
+        {
+            "Admin" => "#dc2626",
+            "Manager" => "#2563eb",
+            "Moderator" => "#7c3aed",
+            "Examiner" => "#059669",
+            _ => "#6b7280"
+        };
+    }
 }

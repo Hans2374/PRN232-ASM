@@ -1,0 +1,148 @@
+@page "{id}"
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Moderator.Verification.DetailsModel
+@{
+    ViewData["Title"] = "Zero-Score Verification Details";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-warning">@TempData["AuthError"]</div>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+@if (Model.Detail != null)
+{
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Submission Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-6">
+                            <strong>Student:</strong> @Model.Detail.StudentCode
+                        </div>
+                        <div class="col-sm-6">
+                            <strong>Exam:</strong> @Model.Detail.ExamName
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-6">
+                            <strong>Examiner Score:</strong> @Model.Detail.ExaminerScore?.ToString("F2") ?? "N/A"
+                        </div>
+                        <div class="col-sm-6">
+                            <strong>Created:</strong> @Model.Detail.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Detail.GradingComments))
+                    {
+                        <div class="mb-3">
+                            <strong>Grading Comments:</strong>
+                            <div class="mt-2 p-3 bg-light rounded">@Model.Detail.GradingComments</div>
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <strong>Violation:</strong>
+                        <div class="mt-2">
+                            <span class="badge bg-danger">@Model.Detail.ViolationType</span>
+                        </div>
+                        <div class="mt-2 p-3 bg-warning text-dark rounded">@Model.Detail.ViolationDescription</div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Detail.EvidencePath))
+                    {
+                        <div class="mb-3">
+                            <strong>Evidence:</strong>
+                            <div class="mt-2">
+                                <a href="@Model.Detail.EvidencePath" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-file me-2"></i>View Evidence
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Verification Decision</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Action</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="action" id="confirm" value="confirm" checked>
+                                <label class="form-check-label" for="confirm">
+                                    <strong>Confirm Zero Score</strong>
+                                    <br><small class="text-muted">Accept the zero score as valid due to violation.</small>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="action" id="override" value="override">
+                                <label class="form-check-label" for="override">
+                                    <strong>Override Score</strong>
+                                    <br><small class="text-muted">Assign a different score to this submission.</small>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="overrideScoreGroup" style="display: none;">
+                            <label for="overrideScore" class="form-label">Override Score <span class="text-danger">*</span></label>
+                            <input type="number" id="overrideScore" name="overrideScore" class="form-control" min="0" max="100" step="0.01">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="moderatorComment" class="form-label">Comment <span class="text-danger">*</span></label>
+                            <textarea id="moderatorComment" name="moderatorComment" class="form-control" rows="3" placeholder="Provide reasoning for your decision..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Submit Verification</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">Submission not found.</div>
+}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const confirmRadio = document.getElementById('confirm');
+        const overrideRadio = document.getElementById('override');
+        const overrideScoreGroup = document.getElementById('overrideScoreGroup');
+        const overrideScoreInput = document.getElementById('overrideScore');
+
+        function toggleOverrideScore() {
+            if (overrideRadio.checked) {
+                overrideScoreGroup.style.display = 'block';
+                overrideScoreInput.required = true;
+            } else {
+                overrideScoreGroup.style.display = 'none';
+                overrideScoreInput.required = false;
+            }
+        }
+
+        confirmRadio.addEventListener('change', toggleOverrideScore);
+        overrideRadio.addEventListener('change', toggleOverrideScore);
+    });
+</script>

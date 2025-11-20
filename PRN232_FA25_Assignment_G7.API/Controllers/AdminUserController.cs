@@ -118,10 +118,10 @@ public class AdminUserController : ControllerBase
                 user
             );
         }
-        catch (InvalidOperationException ex)
+        catch (PRN232_FA25_Assignment_G7.Services.Exceptions.DuplicateUsernameException ex)
         {
-            _logger.LogWarning("User creation failed: {Message}", ex.Message);
-            return BadRequest(new { message = ex.Message });
+            _logger.LogWarning("User creation conflict: {Message}", ex.Message);
+            return Conflict(new { message = ex.Message });
         }
         catch (ArgumentException ex)
         {
