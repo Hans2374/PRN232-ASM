@@ -35,10 +35,10 @@ public class ViolationsController : ControllerBase
             v.Id,
             v.SubmissionId,
             v.Submission?.StudentCode ?? string.Empty,
-            v.Type,
+            v.ViolationType.ToString(),
             v.Description,
             v.Severity,
-            v.IsZeroScore
+            v.Status
         )).ToList();
 
         return Ok(response);
@@ -63,10 +63,12 @@ public class ViolationsController : ControllerBase
         {
             Id = Guid.NewGuid(),
             SubmissionId = submissionId,
-            Type = "Plagiarism",
+            ViolationType = ViolationType.Plagiarism,
             Description = "Detected potential plagiarism.",
-            Severity = 5,
-            IsZeroScore = true
+            Severity = ViolationSeverity.Critical,
+            Status = ViolationStatus.New,
+            CreatedBy = Guid.Empty, // TODO: Get current user ID
+            CreatedAt = DateTime.UtcNow
         };
 
         _context.Violations.Add(violation);
@@ -77,14 +79,14 @@ public class ViolationsController : ControllerBase
         {
             SubmissionId = submissionId,
             StudentCode = submission.StudentCode,
-            ViolationType = violation.Type,
-            IsZeroScore = violation.IsZeroScore,
+            ViolationType = violation.ViolationType.ToString(),
+            Severity = violation.Severity,
             Timestamp = DateTime.UtcNow
         }, ct);
 
         var response = new List<ViolationResponse>
         {
-            new(violation.Id, violation.SubmissionId, submission.StudentCode, violation.Type, violation.Description, violation.Severity, violation.IsZeroScore)
+            new(violation.Id, violation.SubmissionId, submission.StudentCode, violation.ViolationType.ToString(), violation.Description, violation.Severity, violation.Status)
         };
 
         return Ok(response);
@@ -115,10 +117,10 @@ public class ViolationsController : ControllerBase
             v.Id,
             v.SubmissionId,
             v.Submission?.StudentCode ?? string.Empty,
-            v.Type,
+            v.ViolationType.ToString(),
             v.Description,
             v.Severity,
-            v.IsZeroScore
+            v.Status
         )).ToList();
 
         return Ok(response);
@@ -140,14 +142,10 @@ public class ViolationsController : ControllerBase
             violation.SubmissionId,
             violation.Submission?.StudentCode ?? string.Empty,
             violation.Submission?.Exam?.Name ?? string.Empty,
-            violation.Type,
+            violation.ViolationType.ToString(),
             violation.Description,
             violation.Severity,
-            violation.IsZeroScore,
-            violation.ReviewStatus.ToString(),
-            violation.ReviewedBy,
-            violation.ReviewedAt,
-            violation.ReviewComments,
+            violation.Status,
             violation.CreatedAt
         );
 
@@ -164,19 +162,16 @@ public class ViolationsController : ControllerBase
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-        violation.ReviewStatus = request.Approve 
-            ? ViolationReviewStatus.ModeratorApproved 
-            : ViolationReviewStatus.ModeratorRejected;
-        violation.ReviewedBy = Guid.Parse(userId);
-        violation.ReviewedAt = DateTime.UtcNow;
-        violation.ReviewComments = request.Comments;
+        violation.Status = request.Approve
+            ? ViolationStatus.Reviewed
+            : ViolationStatus.Escalated;
 
         await _context.SaveChangesAsync(ct);
 
         await _hubContext.Clients.All.SendAsync("ViolationReviewed", new
         {
             ViolationId = violation.Id,
-            Status = violation.ReviewStatus.ToString(),
+            Status = violation.Status.ToString(),
             Timestamp = DateTime.UtcNow
         }, ct);
 
@@ -193,19 +188,16 @@ public class ViolationsController : ControllerBase
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-        violation.ReviewStatus = request.Approve 
-            ? ViolationReviewStatus.AdminApproved 
-            : ViolationReviewStatus.AdminRejected;
-        violation.ReviewedBy = Guid.Parse(userId);
-        violation.ReviewedAt = DateTime.UtcNow;
-        violation.ReviewComments = request.Comments;
+        violation.Status = request.Approve
+            ? ViolationStatus.Resolved
+            : ViolationStatus.Escalated;
 
         await _context.SaveChangesAsync(ct);
 
         await _hubContext.Clients.All.SendAsync("ViolationReviewed", new
         {
             ViolationId = violation.Id,
-            Status = violation.ReviewStatus.ToString(),
+            Status = violation.Status.ToString(),
             Timestamp = DateTime.UtcNow
         }, ct);
 
@@ -222,13 +214,14 @@ public class ViolationsController : ControllerBase
 
         if (violation == null) return NotFound();
 
-        violation.IsZeroScore = request.Confirm;
-        violation.ReviewComments = request.Comments;
+        violation.Status = request.Confirm
+            ? ViolationStatus.Resolved
+            : ViolationStatus.Escalated;
 
         if (request.Confirm && violation.Submission != null)
         {
             violation.Submission.Score = 0;
-            violation.Submission.ReviewStatus = ReviewStatus.Completed;
+            // TODO: Update submission review status if needed
         }
 
         await _context.SaveChangesAsync(ct);
@@ -250,11 +243,11 @@ public class ViolationsController : ControllerBase
         {
             Id = Guid.NewGuid(),
             SubmissionId = request.SubmissionId,
-            Type = request.Type,
+            ViolationType = Enum.Parse<ViolationType>(request.Type),
             Description = request.Description,
-            Severity = request.Severity,
-            IsZeroScore = request.IsZeroScore,
-            ReviewStatus = ViolationReviewStatus.Pending,
+            Severity = (ViolationSeverity)request.Severity,
+            Status = ViolationStatus.New,
+            CreatedBy = Guid.Empty, // TODO: Get current user ID
             CreatedAt = DateTime.UtcNow
         };
 
@@ -265,8 +258,8 @@ public class ViolationsController : ControllerBase
         {
             SubmissionId = request.SubmissionId,
             StudentCode = submission.StudentCode,
-            ViolationType = request.Type,
-            IsZeroScore = request.IsZeroScore,
+            ViolationType = violation.ViolationType.ToString(),
+            Severity = violation.Severity,
             Timestamp = DateTime.UtcNow
         }, ct);
 
@@ -274,10 +267,10 @@ public class ViolationsController : ControllerBase
             violation.Id,
             violation.SubmissionId,
             submission.StudentCode,
-            violation.Type,
+            violation.ViolationType.ToString(),
             violation.Description,
             violation.Severity,
-            violation.IsZeroScore
+            violation.Status
         );
 
         return CreatedAtAction(nameof(Get), new { id = violation.Id }, response);

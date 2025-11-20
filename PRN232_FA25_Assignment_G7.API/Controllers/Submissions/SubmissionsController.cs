@@ -97,7 +97,6 @@ public class SubmissionsController : ControllerBase
 
     [HttpPost("upload")]
     [Authorize(Roles = "Admin,Manager,Moderator,Examiner")]
-    [RequestSizeLimit(100_000_000)] //100MB
     public async Task<ActionResult<PRN232_FA25_Assignment_G7.API.DTOs.SubmissionResponse>> Upload([FromForm] PRN232_FA25_Assignment_G7.API.DTOs.ProcessSubmissionRequest request, CancellationToken ct)
     {
         var exam = await _context.Exams.FindAsync([request.ExamId], ct);
@@ -150,10 +149,12 @@ public class SubmissionsController : ControllerBase
             {
                 Id = Guid.NewGuid(),
                 SubmissionId = submission.Id,
-                Type = d.Type,
+                ViolationType = Enum.Parse<ViolationType>(d.Type),
                 Description = d.Description,
-                Severity = d.Severity,
-                IsZeroScore = d.IsZeroScore
+                Severity = (ViolationSeverity)d.Severity,
+                Status = ViolationStatus.New,
+                CreatedBy = Guid.Empty, // TODO: Get current user ID
+                CreatedAt = DateTime.UtcNow
             };
             violationEntities.Add(ve);
         }
@@ -170,8 +171,8 @@ public class SubmissionsController : ControllerBase
                 {
                     SubmissionId = submission.Id,
                     StudentCode = submission.StudentCode,
-                    ViolationType = v.Type,
-                    IsZeroScore = v.IsZeroScore,
+                    ViolationType = v.ViolationType.ToString(),
+                    Severity = v.Severity,
                     Timestamp = DateTime.UtcNow
                 }, ct).ConfigureAwait(false);
             }
@@ -221,10 +222,12 @@ public class SubmissionsController : ControllerBase
                 {
                     Id = Guid.NewGuid(),
                     SubmissionId = submission.Id,
-                    Type = "Plagiarism",
+                    ViolationType = ViolationType.Plagiarism,
                     Description = $"Similarity {bestSim:P0} with submission {other.Id} (files: {Path.GetFileName(myFilePath ?? "")} vs {Path.GetFileName(otherFilePath ?? "")})",
-                    Severity = (int)Math.Round(bestSim *10),
-                    IsZeroScore = bestSim >=0.9
+                    Severity = bestSim >= 0.9 ? ViolationSeverity.Critical : bestSim >= 0.7 ? ViolationSeverity.High : ViolationSeverity.Medium,
+                    Status = ViolationStatus.New,
+                    CreatedBy = Guid.Empty, // TODO: Get current user ID
+                    CreatedAt = DateTime.UtcNow
                 };
                 _context.Violations.Add(dupViolation);
                 await _context.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -276,7 +279,6 @@ public class SubmissionsController : ControllerBase
 
     [HttpPost("bulk-upload")]
     [Authorize(Roles = "Admin,Manager")]
-    [RequestSizeLimit(500_000_000)] // 500MB for bulk uploads
     public async Task<ActionResult<BulkUploadResult>> BulkUpload([FromForm] Guid examId, [FromForm] IFormFile file, CancellationToken ct)
     {
         if (file == null || file.Length == 0)
@@ -287,6 +289,11 @@ public class SubmissionsController : ControllerBase
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!allowedExtensions.Contains(extension))
             return BadRequest("Only RAR, ZIP, 7Z, TAR, and GZ archives are supported");
+
+        // Check file size against configured limit
+        var maxUploadBytes = 1073741824L; // 1GB default for bulk uploads
+        if (file.Length > maxUploadBytes)
+            return BadRequest($"Archive file too large. Maximum allowed size is {maxUploadBytes / (1024 * 1024 * 1024):F1}GB.");
 
         // Validate exam exists
         var exam = await _context.Exams.FindAsync([examId], ct);
@@ -361,7 +368,7 @@ public class SubmissionsController : ControllerBase
 
         if (submission == null) return NotFound();
 
-        var hasZeroScoreViolation = submission.Violations.Any(v => v.IsZeroScore);
+        var hasZeroScoreViolation = submission.Violations.Any(v => v.Severity == ViolationSeverity.Critical && v.Status == ViolationStatus.Resolved);
         if (hasZeroScoreViolation)
         {
             submission.Score = 0;

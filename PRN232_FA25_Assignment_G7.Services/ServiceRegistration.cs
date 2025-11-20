@@ -21,6 +21,7 @@ public static class ServiceRegistration
         services.AddScoped<IUserManagementService, UserManagementService>();
         services.AddScoped<IBulkUploadService, BulkUploadService>();
         services.AddScoped<IModeratorService, ModeratorService>();
+        services.AddScoped<IImportService, ImportService>();
 
         // Register helpers
         services.AddScoped<DuplicateChecker>();

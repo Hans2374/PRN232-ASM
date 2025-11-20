@@ -173,9 +173,9 @@ public class ExaminerService : IExaminerService
 
         var scores = new List<ScoreDto>(); // No individual scores stored
 
-        var violations = submission.Violations.Select(v => new ViolationDto(
+        var violations = submission.Violations.Select(v => new PRN232_FA25_Assignment_G7.Services.DTOs.Examiner.ViolationDto(
             v.Id,
-            v.Type,
+            v.ViolationType.ToString(),
             v.Description,
             v.CreatedAt
         )).ToList();
@@ -276,9 +276,9 @@ public class ExaminerService : IExaminerService
         var scores = new List<ScoreDto>();
         var primaryScores = new List<ScoreDto>();
 
-        var violations = submission.Violations.Select(v => new ViolationDto(
+        var violations = submission.Violations.Select(v => new PRN232_FA25_Assignment_G7.Services.DTOs.Examiner.ViolationDto(
             v.Id,
-            v.Type,
+            v.ViolationType.ToString(),
             v.Description,
             v.CreatedAt
         )).ToList();

@@ -83,10 +83,10 @@ public class ReportsController : ControllerBase
             var v = violations[i];
             worksheet.Cell(i + 2, 1).Value = v.Submission?.Exam?.Name ?? "";
             worksheet.Cell(i + 2, 2).Value = v.Submission?.StudentCode ?? "";
-            worksheet.Cell(i + 2, 3).Value = v.Type;
+            worksheet.Cell(i + 2, 3).Value = v.ViolationType.ToString();
             worksheet.Cell(i + 2, 4).Value = v.Description;
-            worksheet.Cell(i + 2, 5).Value = v.Severity;
-            worksheet.Cell(i + 2, 6).Value = v.IsZeroScore;
+            worksheet.Cell(i + 2, 5).Value = v.Severity.ToString();
+            worksheet.Cell(i + 2, 6).Value = v.Status.ToString();
         }
 
         using var stream = new MemoryStream();

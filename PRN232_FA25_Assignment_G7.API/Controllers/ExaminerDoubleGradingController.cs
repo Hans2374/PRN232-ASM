@@ -91,9 +91,9 @@ public class ExaminerDoubleGradingController : ControllerBase
         var scores = new List<ScoreDto>(); // Simplified - no individual scores stored
         var primaryScores = new List<ScoreDto>(); // Simplified - no individual scores stored
 
-        var violations = submission.Violations.Select(v => new ViolationDto(
+        var violations = submission.Violations.Select(v => new PRN232_FA25_Assignment_G7.API.DTOs.ViolationDto(
             v.Id,
-            v.Type,
+            v.ViolationType.ToString(),
             v.Description,
             v.CreatedAt
         )).ToList();

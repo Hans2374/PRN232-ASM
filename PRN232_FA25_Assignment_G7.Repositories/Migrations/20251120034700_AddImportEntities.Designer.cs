@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PRN232_FA25_Assignment_G7.Repositories;
 
@@ -11,13 +12,15 @@ using PRN232_FA25_Assignment_G7.Repositories;
 namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251120034700_AddImportEntities")]
+    partial class AddImportEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.22")
+                .HasAnnotation("ProductVersion", "8.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -222,9 +225,6 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
-                    b.Property<Guid>("ExamId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int>("FailedCount")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
@@ -277,8 +277,6 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                         .HasDefaultValue(0);
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ExamId");
 
                     b.HasIndex("UploaderUserId");
 
@@ -536,7 +534,7 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                             Email = "admin@example.com",
                             FullName = "System Administrator",
                             IsActive = true,
-                            PasswordHash = "$2a$11$MyugCFL2K4dU5UsMZZOr4eaIZIQFi2NQbgRCerwLe.CY40gqrXdHS",
+                            PasswordHash = "$2a$11$6CfecY.D4UYWAggFoLbj3.eG/ZyaZ89Yt4n4NFxeJ/FSksNOVRbGy",
                             Role = 1,
                             Username = "admin"
                         },
@@ -547,7 +545,7 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                             Email = "moderator@example.com",
                             FullName = "Content Moderator",
                             IsActive = true,
-                            PasswordHash = "$2a$11$qJY6nC/Fw5vf7w6V6pkEcOw4uzivLWDNyuzeuqgDkDpzzr3TBQodK",
+                            PasswordHash = "$2a$11$bDbE47mZvsTIlOHpFb5k7O5Rr3a9fgkmEsWzP84m8I.9dZ1.jSG7i",
                             Role = 3,
                             Username = "moderator"
                         });
@@ -590,7 +588,7 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
-                    b.Property<Guid?>("SubmissionId")
+                    b.Property<Guid>("SubmissionId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("ViolationType")
@@ -693,19 +691,11 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.ImportJob", b =>
                 {
-                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Exam", "Exam")
-                        .WithMany()
-                        .HasForeignKey("ExamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.User", "Uploader")
                         .WithMany()
                         .HasForeignKey("UploaderUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Exam");
 
                     b.Navigation("Uploader");
                 });
@@ -768,7 +758,8 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                     b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Submission", "Submission")
                         .WithMany("Violations")
                         .HasForeignKey("SubmissionId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Creator");
 

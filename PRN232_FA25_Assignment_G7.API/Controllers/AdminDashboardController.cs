@@ -31,7 +31,7 @@ public class AdminDashboardController : ControllerBase
         var totalExams = await _context.Exams.CountAsync(ct);
         var totalSubmissions = await _context.Submissions.CountAsync(ct);
         var pendingViolations = await _context.Violations
-            .CountAsync(v => v.ReviewStatus == ViolationReviewStatus.Pending, ct);
+            .CountAsync(v => v.Status == ViolationStatus.New, ct);
         var pendingReviews = await _context.Submissions
             .CountAsync(s => s.ReviewStatus == ReviewStatus.AdminPending, ct);
 

@@ -4,27 +4,23 @@ using PRN232_FA25_Assignment_G7.Repositories.Entities;
 
 public record ViolationResponse(
     Guid Id,
-    Guid SubmissionId,
+    Guid? SubmissionId,
     string StudentCode,
-    string Type,
+    string ViolationType,
     string Description,
-    int Severity,
-    bool IsZeroScore
+    ViolationSeverity Severity,
+    ViolationStatus Status
 );
 
 public record ViolationDetailResponse(
     Guid Id,
-    Guid SubmissionId,
+    Guid? SubmissionId,
     string StudentCode,
     string ExamName,
-    string Type,
+    string ViolationType,
     string Description,
-    int Severity,
-    bool IsZeroScore,
-    string ReviewStatus,
-    Guid? ReviewedBy,
-    DateTime? ReviewedAt,
-    string? ReviewComments,
+    ViolationSeverity Severity,
+    ViolationStatus Status,
     DateTime CreatedAt
 );
 
@@ -79,7 +75,7 @@ public record DecisionDto(
 // Zero-Score Verification DTOs
 public record ZeroScoreSubmissionDto(
     Guid Id,
-    Guid SubmissionId,
+    Guid? SubmissionId,
     string StudentCode,
     string ExamName,
     string ViolationType,
@@ -89,7 +85,7 @@ public record ZeroScoreSubmissionDto(
 
 public record ZeroScoreDetailDto(
     Guid Id,
-    Guid SubmissionId,
+    Guid? SubmissionId,
     string StudentCode,
     string ExamName,
     decimal? ExaminerScore,

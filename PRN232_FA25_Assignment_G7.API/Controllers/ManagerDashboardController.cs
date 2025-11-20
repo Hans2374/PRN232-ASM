@@ -30,7 +30,7 @@ public class ManagerDashboardController : ControllerBase
             .CountAsync(s => s.SubmissionStatus >= SubmissionStatus.Graded, ct);
         var totalSubmissions = pendingGrading + graded;
         var pendingViolations = await _context.Violations
-            .CountAsync(v => v.ReviewStatus == ViolationReviewStatus.Pending, ct);
+            .CountAsync(v => v.Status == ViolationStatus.New, ct);
 
         // For double grade required, assume some logic, for now 0
         var doubleGradeRequired = 0;

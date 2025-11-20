@@ -65,7 +65,7 @@ public record DecisionDto(
 // Zero-Score Verification DTOs
 public record ZeroScoreSubmissionDto(
     Guid Id,
-    Guid SubmissionId,
+    Guid? SubmissionId,
     string StudentCode,
     string ExamName,
     string ViolationType,
@@ -75,7 +75,7 @@ public record ZeroScoreSubmissionDto(
 
 public record ZeroScoreDetailDto(
     Guid Id,
-    Guid SubmissionId,
+    Guid? SubmissionId,
     string StudentCode,
     string ExamName,
     decimal? ExaminerScore,

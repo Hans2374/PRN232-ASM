@@ -31,7 +31,7 @@ public class ModeratorService : IModeratorService
 
         // Total zero-score submissions pending verification
         var totalZeroScorePending = await _context.Violations
-            .CountAsync(v => v.IsZeroScore && v.ReviewStatus == ViolationReviewStatus.Pending);
+            .CountAsync(v => v.ViolationType == ViolationType.InvalidFormat && v.Status == ViolationStatus.New);
 
         // Recent discrepancies (submissions with different scores)
         var recentDiscrepancies = await _context.Submissions
@@ -52,7 +52,7 @@ public class ModeratorService : IModeratorService
         {
             new("Double-Grading Discrepancy", await _context.Submissions
                 .CountAsync(s => s.Score.HasValue && s.SecondScore.HasValue && s.Score != s.SecondScore)),
-            new("Violation Flagged", await _context.Violations.CountAsync(v => v.ReviewStatus == ViolationReviewStatus.Pending))
+            new("Violation Flagged", await _context.Violations.CountAsync(v => v.Status == ViolationStatus.New))
         };
 
         return new ModeratorDashboardResponse(
@@ -94,14 +94,14 @@ public class ModeratorService : IModeratorService
         var query = _context.Violations
             .Include(v => v.Submission)
             .ThenInclude(s => s!.Exam)
-            .Where(v => v.IsZeroScore)
+            .Where(v => v.ViolationType == ViolationType.InvalidFormat)
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(filter.Status) && filter.Status != "All")
         {
-            if (Enum.TryParse<ViolationReviewStatus>(filter.Status, out var status))
+            if (Enum.TryParse<ViolationStatus>(filter.Status, out var status))
             {
-                query = query.Where(v => v.ReviewStatus == status);
+                query = query.Where(v => v.Status == status);
             }
         }
 
@@ -126,7 +126,7 @@ public class ModeratorService : IModeratorService
                 v.SubmissionId,
                 v.Submission!.StudentCode,
                 v.Submission!.Exam!.Name,
-                v.Type,
+                v.ViolationType.ToString(),
                 v.Description,
                 v.CreatedAt
             ))
@@ -158,7 +158,7 @@ public class ModeratorService : IModeratorService
             violation.Submission!.Exam!.Name,
             violation.Submission.Score,
             violation.Submission.GradingComments,
-            violation.Type,
+            violation.ViolationType.ToString(),
             violation.Description,
             null, // Evidence path - could be added later
             violation.CreatedAt
@@ -170,15 +170,15 @@ public class ModeratorService : IModeratorService
         var violation = await _context.Violations.FindAsync(id);
         if (violation == null) throw new KeyNotFoundException("Violation not found");
 
-        var submission = await _context.Submissions.FindAsync(violation.SubmissionId);
+        if (!violation.SubmissionId.HasValue)
+            throw new KeyNotFoundException("Submission not found");
+
+        var submission = await _context.Submissions.FindAsync(violation.SubmissionId.Value);
         if (submission == null) throw new KeyNotFoundException("Submission not found");
 
         if (request.Action == "confirm")
         {
-            violation.ReviewStatus = ViolationReviewStatus.ModeratorApproved;
-            violation.ReviewedBy = moderatorId;
-            violation.ReviewedAt = DateTime.UtcNow;
-            violation.ReviewComments = request.ModeratorComment;
+            violation.Status = ViolationStatus.Resolved;
             // Keep score as 0
         }
         else if (request.Action == "override")
@@ -186,10 +186,7 @@ public class ModeratorService : IModeratorService
             if (!request.OverrideScore.HasValue)
                 throw new ArgumentException("Override score is required");
 
-            violation.ReviewStatus = ViolationReviewStatus.ModeratorApproved;
-            violation.ReviewedBy = moderatorId;
-            violation.ReviewedAt = DateTime.UtcNow;
-            violation.ReviewComments = request.ModeratorComment;
+            violation.Status = ViolationStatus.Resolved;
             submission.Score = request.OverrideScore.Value;
             submission.ModeratorComments = request.ModeratorComment;
         }

@@ -48,7 +48,16 @@ public class Submission
     public string? ModeratorComments { get; set; }
     public string? AdminComments { get; set; }
 
+    // Import-related fields
+    public Guid? ImportJobId { get; set; }
+    public string? ExtractedText { get; set; }
+    public string? FileHash { get; set; }
+    public Guid? DuplicateGroupId { get; set; }
+
     public Exam? Exam { get; set; }
+    public ImportJob? ImportJob { get; set; }
+    public DuplicateGroup? DuplicateGroup { get; set; }
     public ICollection<Violation> Violations { get; set; } = new List<Violation>();
     public ICollection<Complaint> Complaints { get; set; } = new List<Complaint>();
+    public ICollection<SubmissionImage> Images { get; set; } = new List<SubmissionImage>();
 }

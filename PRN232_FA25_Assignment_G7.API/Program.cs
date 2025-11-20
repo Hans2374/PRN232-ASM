@@ -9,6 +9,18 @@ using PRN232_FA25_Assignment_G7.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Kestrel for large file uploads
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = long.MaxValue; // Allow unlimited request body size for large RAR archives
+});
+
+// Configure FormOptions for multipart uploads
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = long.MaxValue; // Allow unlimited multipart body size
+});
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -74,5 +86,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<SubmissionHub>("/hubs/submission");
+app.MapHub<ImportHub>("/hubs/import");
 
 app.Run();

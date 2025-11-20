@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PRN232_FA25_Assignment_G7.Repositories;
 
@@ -11,9 +12,11 @@ using PRN232_FA25_Assignment_G7.Repositories;
 namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251120045051_AddExamIdToImportJobs")]
+    partial class AddExamIdToImportJobs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -536,7 +539,7 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                             Email = "admin@example.com",
                             FullName = "System Administrator",
                             IsActive = true,
-                            PasswordHash = "$2a$11$MyugCFL2K4dU5UsMZZOr4eaIZIQFi2NQbgRCerwLe.CY40gqrXdHS",
+                            PasswordHash = "$2a$11$LxDGkUoRx4DxoLRiFKMg6us1Ge0lFXKznNnacLZl/QJ26Qb0zezGi",
                             Role = 1,
                             Username = "admin"
                         },
@@ -547,7 +550,7 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                             Email = "moderator@example.com",
                             FullName = "Content Moderator",
                             IsActive = true,
-                            PasswordHash = "$2a$11$qJY6nC/Fw5vf7w6V6pkEcOw4uzivLWDNyuzeuqgDkDpzzr3TBQodK",
+                            PasswordHash = "$2a$11$TjW2VArrKyYK293kxAQXDOqiascAtdeQdPmNKvtzXoRggkV8XfW3K",
                             Role = 3,
                             Username = "moderator"
                         });
@@ -590,7 +593,7 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
-                    b.Property<Guid?>("SubmissionId")
+                    b.Property<Guid>("SubmissionId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("ViolationType")
@@ -768,7 +771,8 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                     b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Submission", "Submission")
                         .WithMany("Violations")
                         .HasForeignKey("SubmissionId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Creator");
 

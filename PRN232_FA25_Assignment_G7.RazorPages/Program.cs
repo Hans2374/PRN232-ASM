@@ -3,6 +3,12 @@ using PRN232_FA25_Assignment_G7.RazorPages.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure FormOptions for large file uploads in RazorPages
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = long.MaxValue; // Allow unlimited multipart body size for large RAR archives
+});
+
 // Add services to the container
 builder.Services.AddRazorPages();
 

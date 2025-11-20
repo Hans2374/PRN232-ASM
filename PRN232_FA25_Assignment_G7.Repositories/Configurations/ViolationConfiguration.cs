@@ -11,16 +11,27 @@ public class ViolationConfiguration : IEntityTypeConfiguration<Violation>
         builder.ToTable("Violations");
         builder.HasKey(v => v.Id);
         
-        builder.Property(v => v.Type).IsRequired().HasMaxLength(100);
+        builder.Property(v => v.ViolationType).IsRequired();
+        builder.Property(v => v.Severity).IsRequired().HasDefaultValue(ViolationSeverity.Medium);
         builder.Property(v => v.Description).IsRequired().HasMaxLength(1000);
-        builder.Property(v => v.Severity).IsRequired();
-        builder.Property(v => v.IsZeroScore).IsRequired().HasDefaultValue(false);
-        builder.Property(v => v.ReviewComments).HasMaxLength(2000);
+        builder.Property(v => v.Evidence).HasConversion(
+            v => string.Join(";", v),
+            v => v.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList()
+        );
+        builder.Property(v => v.ConfidenceScore).HasPrecision(5, 4);
+        builder.Property(v => v.CreatedBy).IsRequired();
         builder.Property(v => v.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(v => v.Status).IsRequired().HasDefaultValue(ViolationStatus.New);
         
-        builder.HasOne(v => v.Submission)
-               .WithMany(s => s.Violations)
-               .HasForeignKey(v => v.SubmissionId)
-               .OnDelete(DeleteBehavior.Cascade);
+         builder.Property<Guid?>(nameof(Violation.SubmissionId)).IsRequired(false);
+         builder.HasOne(v => v.Submission)
+             .WithMany(s => s.Violations)
+             .HasForeignKey(v => v.SubmissionId)
+             .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.HasOne(v => v.Creator)
+               .WithMany()
+               .HasForeignKey(v => v.CreatedBy)
+               .OnDelete(DeleteBehavior.Restrict);
     }
 }

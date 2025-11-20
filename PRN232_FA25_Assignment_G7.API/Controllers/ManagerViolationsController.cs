@@ -23,7 +23,7 @@ public class ManagerViolationsController : ControllerBase
     {
         var violations = await _context.Violations
             .Include(v => v.Submission)
-            .Where(v => v.ReviewStatus == ViolationReviewStatus.Pending)
+            .Where(v => v.Status == ViolationStatus.New)
             .Join(_context.Examiners,
                 v => v.Submission.GradedBy,
                 e => e.Id,
@@ -32,9 +32,8 @@ public class ManagerViolationsController : ControllerBase
                     v.SubmissionId,
                     e.FullName,
                     v.Description,
-                    "Pending"
-                ))
-            .ToListAsync();
+                    v.Status.ToString()
+                )).ToListAsync();
         return Ok(violations);
     }
 
@@ -53,9 +52,9 @@ public class ManagerViolationsController : ControllerBase
             violation.SubmissionId,
             examiner?.FullName ?? "Unknown",
             violation.Description,
-            violation.Type,
+            violation.ViolationType.ToString(),
             new string[0], // no evidence urls
-            violation.ReviewStatus.ToString()
+            violation.Status.ToString()
         );
         return Ok(detail);
     }
@@ -66,20 +65,19 @@ public class ManagerViolationsController : ControllerBase
         var violation = await _context.Violations.FindAsync(id);
         if (violation == null) return NotFound();
 
-        violation.ReviewStatus = request.Decision switch
+        violation.Status = request.Decision switch
         {
-            "approve" => ViolationReviewStatus.AdminApproved,
-            "reject" => ViolationReviewStatus.AdminRejected,
-            "escalate" => ViolationReviewStatus.Escalated,
-            _ => violation.ReviewStatus
+            "approve" => ViolationStatus.Resolved,
+            "reject" => ViolationStatus.Escalated,
+            "escalate" => ViolationStatus.Escalated,
+            _ => violation.Status
         };
-        violation.ReviewComments = request.Comment;
 
         await _context.SaveChangesAsync();
         return Ok();
     }
 
-    public record ViolationSummary(Guid ViolationId, Guid SubmissionId, string ExaminerName, string Reason, string Status);
-    public record ViolationDetail(Guid ViolationId, Guid SubmissionId, string ExaminerName, string Reason, string Details, string[] EvidenceUrls, string Status);
+    public record ViolationSummary(Guid ViolationId, Guid? SubmissionId, string ExaminerName, string Reason, string Status);
+    public record ViolationDetail(Guid ViolationId, Guid? SubmissionId, string ExaminerName, string Reason, string Details, string[] EvidenceUrls, string Status);
     public record ViolationDecisionRequest(string Decision, string Comment);
 }

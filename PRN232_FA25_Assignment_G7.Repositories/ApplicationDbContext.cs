@@ -18,6 +18,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<Violation> Violations => Set<Violation>();
     public DbSet<Complaint> Complaints => Set<Complaint>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
+    public DbSet<SubmissionImage> SubmissionImages => Set<SubmissionImage>();
+    public DbSet<DuplicateGroup> DuplicateGroups => Set<DuplicateGroup>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -238,9 +238,9 @@ public class ExamsController : ControllerBase
         var results = exam.Submissions.Select(s => new StudentResult(
             s.StudentCode,
             s.Score,
-            s.Violations.Any(v => v.IsZeroScore),
-            s.Violations.Any(v => v.IsZeroScore) ? string.Join(", ", s.Violations.Where(v => v.IsZeroScore).Select(v => v.Type)) : string.Empty,
-            s.Violations.Select(v => v.Type).ToList()
+            s.Violations.Any(v => v.Severity == ViolationSeverity.Critical && v.Status == ViolationStatus.Resolved),
+            s.Violations.Any(v => v.Severity == ViolationSeverity.Critical && v.Status == ViolationStatus.Resolved) ? string.Join(", ", s.Violations.Where(v => v.Severity == ViolationSeverity.Critical && v.Status == ViolationStatus.Resolved).Select(v => v.ViolationType.ToString())) : string.Empty,
+            s.Violations.Select(v => v.ViolationType.ToString()).ToList()
         )).ToList();
 
         var exportDto = new ExportResultDto(exam.Name, DateTime.UtcNow, results);
