@@ -1,0 +1,239 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Examiner.DoubleGrading.GradeModel
+@{
+    ViewData["Title"] = "Double Grade Submission";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-users"></i> Double Grade Submission</h4>
+                <a href="/Examiner/DoubleGrading/Index" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back to Tasks
+                </a>
+            </div>
+            <div class="card-body">
+                @if (Model.ErrorMessage != null)
+                {
+                    <div class="alert alert-danger">
+                        @Model.ErrorMessage
+                    </div>
+                }
+                else if (Model.Task != null)
+                {
+                    <!-- Student Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Student Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Name:</strong> @Model.Task.StudentName</p>
+                                    <p><strong>Code:</strong> @Model.Task.StudentCode</p>
+                                    <p><strong>Exam:</strong> @Model.Task.ExamName</p>
+                                    <p><strong>Submitted:</strong> @Model.Task.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Grading Status</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Primary Grader Score:</strong>
+                                        @if (Model.Task.PrimaryScore.HasValue)
+                                        {
+                                            <span class="badge badge-info">@Model.Task.PrimaryScore</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Not yet graded</span>
+                                        }
+                                    </p>
+                                    <p><strong>Your Score:</strong>
+                                        @if (Model.Task.SecondaryScore.HasValue)
+                                        {
+                                            <span class="badge badge-success">@Model.Task.SecondaryScore</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-warning">Pending</span>
+                                        }
+                                    </p>
+                                    @if (Model.Task.PrimaryScore.HasValue && Model.Task.SecondaryScore.HasValue)
+                                    {
+                                        var difference = Math.Abs(Model.Task.PrimaryScore.Value - Model.Task.SecondaryScore.Value);
+                                        <p><strong>Score Difference:</strong>
+                                            @if (difference <= 5)
+                                            {
+                                                <span class="text-success">@difference points</span>
+                                            }
+                                            else if (difference <= 10)
+                                            {
+                                                <span class="text-warning">@difference points</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-danger">@difference points</span>
+                                            }
+                                        </p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Preview -->
+                    @if (!string.IsNullOrEmpty(Model.Task.FileUrl))
+                    {
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Submission File</h6>
+                                </div>
+                                <div class="card-body">
+                                    <iframe src="@Model.Task.FileUrl" width="100%" height="600px" style="border: 1px solid #ddd;"></iframe>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Grading Form -->
+                    <form method="post" id="doubleGradingForm">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>Rubric Grading (Secondary)</h6>
+                            </div>
+                            <div class="card-body">
+                                @if (Model.Task.Rubric.Any())
+                                {
+                                    <div id="rubricItems">
+                                        @for (int i = 0; i < Model.Task.Rubric.Count; i++)
+                                        {
+                                            var criterion = Model.Task.Rubric[i];
+                                            <div class="rubric-item mb-3 p-3 border rounded">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <h6>@criterion.Description</h6>
+                                                        <small class="text-muted">Max Score: @criterion.MaxScore points</small>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label">Your Score</label>
+                                                        <input type="number" class="form-control score-input"
+                                                               name="Scores[@i].Score" min="0" max="@criterion.MaxScore"
+                                                               step="0.5" value="@(Model.Task.Scores?.FirstOrDefault(s => s.CriterionId == criterion.CriterionId)?.Score ?? 0)"
+                                                               @(Model.Task.SecondaryScore.HasValue ? "readonly" : "")>
+                                                        <input type="hidden" name="Scores[@i].CriterionId" value="@criterion.CriterionId">
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label">Primary Score</label>
+                                                        <input type="text" class="form-control" readonly
+                                                               value="@(Model.Task.PrimaryScores?.FirstOrDefault(s => s.CriterionId == criterion.CriterionId)?.Score.ToString() ?? "N/A")">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="finalComment" class="form-label">Final Comment</label>
+                                                <textarea class="form-control" id="finalComment" name="FinalComment" rows="3"
+                                                          placeholder="Optional comments about the submission..."
+                                                          @(Model.Task.SecondaryScore.HasValue ? "readonly" : "")>@Model.Task.FinalComment</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    <h6>Your Total Score: <span id="totalScore">0</span> / <span id="maxScore">@Model.Task.Rubric.Sum(c => c.MaxScore)</span></h6>
+                                                    <p>Percentage: <span id="totalPercentage">0%</span></p>
+                                                    @if (Model.Task.PrimaryScore.HasValue)
+                                                    {
+                                                        <p>Primary Total: @Model.Task.PrimaryScore</p>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-warning">
+                                        No rubric defined for this exam.
+                                    </div>
+                                }
+                            </div>
+                            <div class="card-footer">
+                                @if (!Model.Task.SecondaryScore.HasValue)
+                                {
+                                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                                        <i class="fas fa-save"></i> Submit Double Grade
+                                    </button>
+                                    <button type="button" class="btn btn-secondary ms-2" onclick="window.history.back()">
+                                        Cancel
+                                    </button>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-info">
+                                        You have already completed the double grading for this submission.
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        Double grading task not found.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function calculateScores() {
+            const rubricItems = document.querySelectorAll('.rubric-item');
+            let totalScore = 0;
+            let maxScore = 0;
+
+            rubricItems.forEach(item => {
+                const scoreInput = item.querySelector('.score-input');
+                const score = parseFloat(scoreInput.value) || 0;
+                totalScore += score;
+                maxScore += parseFloat(item.querySelector('small').textContent.replace('Max Score: ', '').replace(' points', ''));
+            });
+
+            document.getElementById('totalScore').textContent = totalScore.toFixed(1);
+            document.getElementById('maxScore').textContent = maxScore.toFixed(1);
+            document.getElementById('totalPercentage').textContent =
+                maxScore > 0 ? ((totalScore / maxScore) * 100).toFixed(1) + '%' : '0%';
+        }
+
+        // Calculate scores on input change
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('score-input')) {
+                calculateScores();
+            }
+        });
+
+        // Initial calculation
+        document.addEventListener('DOMContentLoaded', calculateScores);
+
+        // Form validation
+        document.getElementById('doubleGradingForm').addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        });
+    </script>
+}

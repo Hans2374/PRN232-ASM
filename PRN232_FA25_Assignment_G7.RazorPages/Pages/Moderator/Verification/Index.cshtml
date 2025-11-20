@@ -1,0 +1,115 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Moderator.Verification.IndexModel
+@{
+    ViewData["Title"] = "Zero-Score Verification";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (TempData["AuthError"] != null)
+{
+    <div class="alert alert-warning">@TempData["AuthError"]</div>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h5 class="mb-0">Zero-Score Submissions</h5>
+            </div>
+            <div class="col-auto">
+                <form method="get" class="row g-2">
+                    <div class="col-auto">
+                        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="Pending" selected="@(Model.Status == "Pending")">Pending</option>
+                            <option value="Verified" selected="@(Model.Status == "Verified")">Verified</option>
+                            <option value="All" selected="@(Model.Status == "All")">All</option>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <input type="text" name="studentCode" class="form-control form-control-sm" placeholder="Student Code" value="@Model.StudentCode" onchange="this.form.submit()">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Model.Submissions?.Items != null && Model.Submissions.Items.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Exam</th>
+                            <th>Violation Type</th>
+                            <th>Reason</th>
+                            <th>Submitted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var submission in Model.Submissions.Items)
+                        {
+                            <tr>
+                                <td>@submission.StudentCode</td>
+                                <td>@submission.ExamName</td>
+                                <td>@submission.ViolationType</td>
+                                <td>@submission.Reason</td>
+                                <td>@submission.SubmissionTime.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <a asp-page="Details" asp-route-id="@submission.Id" class="btn btn-sm btn-outline-primary">Review</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (Model.Submissions.TotalPages > 1)
+            {
+                <nav aria-label="Submissions pagination">
+                    <ul class="pagination justify-content-center">
+                        @if (Model.CurrentPage > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" asp-page="Index" asp-route-page="@(Model.CurrentPage - 1)" asp-route-status="@Model.Status" asp-route-studentCode="@Model.StudentCode">Previous</a>
+                            </li>
+                        }
+
+                        @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.Submissions.TotalPages, Model.CurrentPage + 2); i++)
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link" asp-page="Index" asp-route-page="@i" asp-route-status="@Model.Status" asp-route-studentCode="@Model.StudentCode">@i</a>
+                            </li>
+                        }
+
+                        @if (Model.CurrentPage < Model.Submissions.TotalPages)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" asp-page="Index" asp-route-page="@(Model.CurrentPage + 1)" asp-route-status="@Model.Status" asp-route-studentCode="@Model.StudentCode">Next</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="text-center py-4">
+                <p class="text-muted">No zero-score submissions found.</p>
+            </div>
+        }
+    </div>
+</div>

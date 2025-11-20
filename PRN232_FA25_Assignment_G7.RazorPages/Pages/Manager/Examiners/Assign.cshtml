@@ -1,0 +1,187 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Manager.Examiners.AssignModel
+@{
+    ViewData["Title"] = "Assign Examiners";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">Assign Examiners to Exams</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Select Exam</h5>
+                </div>
+                <div class="card-body">
+                    <select id="exam-select" class="form-control">
+                        <option value="">Choose an exam...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4" id="assignment-section" style="display: none;">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Available Examiners</h5>
+                </div>
+                <div class="card-body">
+                    <div id="available-examiners" class="list-group">
+                        <!-- Available examiners will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Assigned Examiners</h5>
+                </div>
+                <div class="card-body">
+                    <div id="assigned-examiners" class="list-group">
+                        <!-- Assigned examiners will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4" id="save-section" style="display: none;">
+        <div class="col-12">
+            <button id="save-assignments" class="btn btn-primary">Save Assignments</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let selectedExamId = null;
+        let assignedExaminers = [];
+
+        document.getElementById('exam-select').addEventListener('change', function() {
+            selectedExamId = this.value;
+            if (selectedExamId) {
+                loadExaminers();
+            } else {
+                hideAssignmentSection();
+            }
+        });
+
+        document.getElementById('save-assignments').addEventListener('click', saveAssignments);
+
+        function loadExams() {
+            fetch('/api/manager/exams')
+                .then(response => response.json())
+                .then(exams => {
+                    const select = document.getElementById('exam-select');
+                    select.innerHTML = '<option value="">Choose an exam...</option>';
+                    exams.forEach(exam => {
+                        const option = document.createElement('option');
+                        option.value = exam.id;
+                        option.textContent = `${exam.subject?.name || 'Unknown'} - ${exam.semester?.name || 'Unknown'}`;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading exams:', error));
+        }
+
+        function loadExaminers() {
+            Promise.all([
+                fetch(`/api/manager/exams/${selectedExamId}/examiners`).then(r => r.json()),
+                fetch(`/api/manager/exams/${selectedExamId}/unassigned-examiners`).then(r => r.json())
+            ])
+            .then(([assigned, available]) => {
+                assignedExaminers = assigned.map(e => e.id);
+                displayExaminers(available, assigned);
+                showAssignmentSection();
+            })
+            .catch(error => console.error('Error loading examiners:', error));
+        }
+
+        function displayExaminers(available, assigned) {
+            const availableList = document.getElementById('available-examiners');
+            const assignedList = document.getElementById('assigned-examiners');
+
+            availableList.innerHTML = available.map(examiner => `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    ${examiner.name}
+                    <button class="btn btn-sm btn-success" onclick="assignExaminer('${examiner.id}')">Assign</button>
+                </div>
+            `).join('');
+
+            assignedList.innerHTML = assigned.map(examiner => `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    ${examiner.name}
+                    <button class="btn btn-sm btn-danger" onclick="unassignExaminer('${examiner.id}')">Unassign</button>
+                </div>
+            `).join('');
+        }
+
+        function assignExaminer(examinerId) {
+            assignedExaminers.push(examinerId);
+            loadExaminers();
+        }
+
+        function unassignExaminer(examinerId) {
+            assignedExaminers = assignedExaminers.filter(id => id !== examinerId);
+            loadExaminers();
+        }
+
+        function saveAssignments() {
+            fetch(`/api/manager/exams/${selectedExamId}/assign`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ examinerIds: assignedExaminers })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Assignments saved successfully! ${data.assigned} examiners assigned.`);
+                    loadExaminers();
+                } else {
+                    alert('Error saving assignments');
+                }
+            })
+            .catch(error => console.error('Error saving assignments:', error));
+        }
+
+        function showAssignmentSection() {
+            document.getElementById('assignment-section').style.display = 'block';
+            document.getElementById('save-section').style.display = 'block';
+        }
+
+        function hideAssignmentSection() {
+            document.getElementById('assignment-section').style.display = 'none';
+            document.getElementById('save-section').style.display = 'none';
+        }
+
+        // Load exams on page load
+        loadExams();
+    </script>
+}
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">No examiners found.</div>
+}
+
+<script>
+    function toggleStatus(examinerId, currentStatus) {
+        if (confirm('Are you sure you want to ' + (currentStatus === 'Active' ? 'disable' : 'enable') + ' this examiner?')) {
+            // Implement toggle status via AJAX or form post
+            alert('Toggle status functionality to be implemented');
+        }
+    }
+</script>

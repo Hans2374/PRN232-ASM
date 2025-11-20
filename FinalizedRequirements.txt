@@ -1,0 +1,317 @@
+✅ FINAL REQUIREMENT CATEGORIES (Corrected Based on Official Final Assignment)
+🎯 This is the list you should trust.
+
+This replaces the .md audit content and corrects all mistakes.
+
+🔷 ADMIN – FINALIZED REQUIREMENTS COMPARISON
+🟢 DONE (Fully matches assignment)
+
+Login / Logout
+
+Role-based authorization
+
+User CRUD (create, update, deactivate, reactivate)
+
+Show active + inactive users
+
+Duplicate username validation (back-end & UI)
+
+Assigning roles (Admin / Manager / Moderator / Examiner)
+
+Subject CRUD
+
+Semester CRUD
+
+Exam list
+
+Exam create
+
+Basic exam delete
+
+Basic exam details view
+
+🔴 MISSING (Assignment requires but NOT implemented)
+
+Admin Dashboard
+
+Admin dashboard is required (summary: users, subjects, exams, stats)
+
+Only a placeholder exists → not implemented
+
+Exam Edit
+
+Assignment requires full CRUD for Exam
+
+You have Create + Delete only → Missing Edit UI + Edit API
+
+Examiner Assignment to Exams
+
+Assignment explicitly requires Admin/Manager to assign examiner(s) to exams
+
+ExamExaminer entity exists but no API/UI implemented
+
+Rubric Management
+
+Required for exam grading
+
+Entity exists but no CRUD or UI
+
+Submission Management (Admin View)
+
+Admin must be able to view exam submissions
+
+Required in assignment (grading workflow overview)
+
+Missing UI
+
+Violation Viewing
+
+Assignment: Admin can view all violation cases
+
+Your pages are stubs → no implementation
+
+Approval / Review Workflows
+
+Required: Admin reviews/approves grading issues, violations
+
+No workflow UI exists
+
+Reports (PDF/Excel Export)
+
+Assignment requires reports for:
+
+Exam results
+
+Grading overview
+
+Violations summary
+
+Not implemented
+
+🔵 OVER-DONE (Implemented but NOT required in assignment)
+
+SignalR real-time submission updates
+
+Auto-file extraction logic
+
+Automatic violation detection from images/words
+
+Advanced exception middleware
+
+OData support
+
+Soft-delete pattern (not required but okay)
+
+None of these appear in the assignment document.
+
+🟩 MANAGER – FINALIZED REQUIREMENTS
+🟢 DONE
+
+Manager login
+
+Manager role exists in JWT
+
+Some endpoints allow Manager access (partial compliance)
+
+🔴 MISSING (Required but NOT implemented)
+
+Manager Dashboard
+
+View examiner list
+
+Assign examiners to exam
+
+View grading progress
+
+View submissions overview
+
+View violations sent from examiner/mod
+
+Reports related to grading
+
+🔵 OVER-DONE
+
+None — manager role is mostly missing.
+
+🟧 MODERATOR – FINALIZED REQUIREMENTS
+🟢 DONE
+
+Moderator login
+
+Moderator role exists in JWT
+
+Moderator can access some violation API endpoints
+
+🔴 MISSING (Required but NOT implemented)
+
+Moderator Dashboard
+
+View violations
+
+Review / confirm violations
+
+Zero-score violation confirmation
+
+Score adjustments (if needed)
+
+Forward violation to Admin
+
+Violation / review history pages
+
+Reports related to violations
+
+🔵 OVER-DONE
+
+Auto-detection system (not required)
+
+Complex violation detection logic (not required)
+
+🟨 EXAMINER – FINALIZED REQUIREMENTS
+🟢 DONE
+
+Examiner login
+
+Examiner role in JWT
+
+Examiner-subject relationship exists in DB
+
+🔴 MISSING (Required but NOT implemented)
+
+Examiner Dashboard
+
+View assigned exams
+
+List submissions for assigned exam
+
+View student submission files
+
+Grade submissions
+
+Submit scores
+
+Double grading workflow (assignment requires it)
+
+View own grading history
+
+Flag submission → violations
+
+🔵 OVER-DONE
+
+None — examiner role barely implemented.
+
+🔶 SHARED FEATURES – FINALIZED REQUIREMENTS
+🟢 DONE
+
+JWT authentication
+
+EF Core with migrations
+
+Core entity models
+
+API + RazorPages connected
+
+Logging
+
+Basic error handling
+
+🔴 MISSING
+
+Workflow status fields (SubmissionStatus, ReviewStatus)
+
+Grading workflow (pending → graded → finalized)
+
+Pagination (assignment requires good UI/UX)
+
+Reporting system (required)
+
+Role-based navigation menus for Manager/Moderator/Examiner
+
+Examiner assignment API/UI
+
+Rubric CRUD
+
+🔵 OVER-DONE
+
+Background processing & auto-processing submission files
+
+Optical/scanner-like violation detection
+
+Unrequired infrastructure complexity
+
+🧾 FINAL CLEAN SUMMARY
+✔ DONE (Matches assignment)
+
+Authentication / authorization
+
+Admin: Users / Subjects / Semesters CRUD
+
+Admin: Basic exams CRUD (partial)
+
+Admin: User management fully implemented
+
+RazorPages + API integration
+
+❌ MISSING (Must be added to pass assignment)
+🔥 Critical missing:
+
+Admin dashboard
+
+Manager UI (100% missing)
+
+Moderator UI (100% missing)
+
+Examiner UI (100% missing)
+
+Exam Edit
+
+Assign examiners
+
+View & grade submissions
+
+Violation review workflow
+
+Reporting (PDF/Excel)
+
+⚠ Medium priority:
+
+Rubric management
+
+Submission details page
+
+Unified grading workflow
+
+Violation filtering
+
+Complaint system (if assignment requires “reviewing violations”)
+
+🔵 OVER-DONE (Not in assignment)
+
+Real-time SignalR
+
+Auto violation detection
+
+OData
+
+Advanced exception middleware
+
+File extraction upon upload🟣 What this means for your team
+
+You have completed around ~35–40% of the assignment (mainly Admin features).
+
+But Manager, Moderator, Examiner roles — which are the core “exam management workflow” — are completely missing.
+
+To pass the assignment, you must finish:
+
+🚀 HIGH PRIORITY NEXT:
+
+Manager → assign examiner + grading progress view
+
+Examiner → grade submissions + double grading
+
+Moderator → violation review pages
+
+Admin → dashboards + reports
+
+Rubric management
+
+Submission view & grading workflow UI

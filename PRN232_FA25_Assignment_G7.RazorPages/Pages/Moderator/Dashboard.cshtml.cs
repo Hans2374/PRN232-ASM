@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using PRN232_FA25_Assignment_G7.RazorPages.Services;
+using PRN232_FA25_Assignment_G7.RazorPages.Models;
 
 namespace PRN232_FA25_Assignment_G7.RazorPages.Pages.Moderator
 {
@@ -8,22 +9,16 @@ namespace PRN232_FA25_Assignment_G7.RazorPages.Pages.Moderator
     {
         private readonly ApiClient _apiClient;
         private readonly AuthSession _authSession;
+        private readonly ILogger<DashboardModel> _logger;
 
-        public DashboardModel(ApiClient apiClient, AuthSession authSession)
+        public DashboardModel(ApiClient apiClient, AuthSession authSession, ILogger<DashboardModel> logger)
         {
             _apiClient = apiClient;
             _authSession = authSession;
+            _logger = logger;
         }
 
-        public ModeratorDashboardData? Data { get; set; }
-
-        public class ModeratorDashboardData
-        {
-            public int ExamsAssignedForApproval { get; set; }
-            public int PendingScoreApprovals { get; set; }
-            public int PendingViolationReviews { get; set; }
-            public int RecentlyResolvedItems { get; set; }
-        }
+        public ModeratorDashboardResponse? Data { get; set; }
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -35,10 +30,10 @@ namespace PRN232_FA25_Assignment_G7.RazorPages.Pages.Moderator
 
             try
             {
-                Data = await _apiClient.GetAsync<ModeratorDashboardData>("/api/moderator/dashboard");
+                Data = await _apiClient.GetModeratorDashboardAsync();
                 if (Data == null)
                 {
-                    Data = new ModeratorDashboardData();
+                    TempData["Error"] = "Unable to load dashboard data.";
                 }
             }
             catch (UnauthorizedAccessException)
@@ -48,7 +43,8 @@ namespace PRN232_FA25_Assignment_G7.RazorPages.Pages.Moderator
             }
             catch (Exception ex)
             {
-                TempData["Error"] = $"Failed to load dashboard data: {ex.Message}";
+                _logger.LogError(ex, "Error loading moderator dashboard");
+                TempData["Error"] = "Cannot reach server. Please try again later.";
             }
 
             return Page();

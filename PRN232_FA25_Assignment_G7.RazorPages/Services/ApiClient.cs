@@ -301,4 +301,128 @@ public class ApiClient
 
         return response;
     }
+
+    // ==================== Moderator Endpoints ====================
+
+    /// <summary>
+    /// Get moderator dashboard data
+    /// </summary>
+    public async Task<ModeratorDashboardResponse?> GetModeratorDashboardAsync()
+    {
+        return await GetAsync<ModeratorDashboardResponse>("/api/moderator/dashboard");
+    }
+
+    /// <summary>
+    /// Get paged list of complaints
+    /// </summary>
+    public async Task<PagedResult<ComplaintSummaryDto>?> GetModeratorComplaintsAsync(
+        string? status = "Pending", Guid? examId = null, string? studentCode = null, int page = 1, int pageSize = 25)
+    {
+        var query = $"?status={status}&page={page}&pageSize={pageSize}";
+        if (examId.HasValue) query += $"&examId={examId}";
+        if (!string.IsNullOrEmpty(studentCode)) query += $"&studentCode={studentCode}";
+
+        return await GetAsync<PagedResult<ComplaintSummaryDto>>($"/api/moderator/complaints{query}");
+    }
+
+    /// <summary>
+    /// Get complaint details
+    /// </summary>
+    public async Task<ComplaintDetailDto?> GetModeratorComplaintAsync(Guid id)
+    {
+        return await GetAsync<ComplaintDetailDto>($"/api/moderator/complaints/{id}");
+    }
+
+    /// <summary>
+    /// Decide on a complaint
+    /// </summary>
+    public async Task<bool> DecideModeratorComplaintAsync(Guid id, DecisionDto dto)
+    {
+        await PostAsync<DecisionDto, object>($"/api/moderator/complaints/{id}/decision", dto);
+        return true;
+    }
+
+    /// <summary>
+    /// Get paged list of zero-score submissions
+    /// </summary>
+    public async Task<PagedResult<ZeroScoreSubmissionDto>?> GetZeroScoreSubmissionsAsync(
+        Guid? examId = null, string? status = "Pending", string? studentCode = null, int page = 1, int pageSize = 25)
+    {
+        var query = $"?status={status}&page={page}&pageSize={pageSize}";
+        if (examId.HasValue) query += $"&examId={examId}";
+        if (!string.IsNullOrEmpty(studentCode)) query += $"&studentCode={studentCode}";
+
+        return await GetAsync<PagedResult<ZeroScoreSubmissionDto>>($"/api/moderator/zero-scores{query}");
+    }
+
+    /// <summary>
+    /// Get zero-score submission details
+    /// </summary>
+    public async Task<ZeroScoreDetailDto?> GetZeroScoreDetailAsync(Guid id)
+    {
+        return await GetAsync<ZeroScoreDetailDto>($"/api/moderator/zero-scores/{id}");
+    }
+
+    /// <summary>
+    /// Verify zero-score submission
+    /// </summary>
+    public async Task<bool> VerifyZeroScoreAsync(Guid id, VerifyZeroScoreRequest request)
+    {
+        await PostAsync<VerifyZeroScoreRequest, object>($"/api/moderator/zero-scores/{id}/verify", request);
+        return true;
+    }
+
+    // Examiner API methods
+    public async Task<ExaminerDashboardResponse?> GetExaminerDashboardAsync()
+    {
+        return await GetAsync<ExaminerDashboardResponse>("/api/examiner/dashboard");
+    }
+
+    public async Task<PagedResult<SubmissionListDto>?> GetExaminerSubmissionsAsync(SubmissionFilter filter)
+    {
+        var queryParams = new List<string>();
+        if (filter.ExamId.HasValue)
+            queryParams.Add($"examId={filter.ExamId}");
+        if (!string.IsNullOrEmpty(filter.Status))
+            queryParams.Add($"status={filter.Status}");
+        queryParams.Add($"page={filter.PageNumber}");
+        queryParams.Add($"pageSize={filter.PageSize}");
+
+        var queryString = string.Join("&", queryParams);
+        return await GetAsync<PagedResult<SubmissionListDto>>($"/api/examiner/submissions?{queryString}");
+    }
+
+    public async Task<SubmissionDetailDto?> GetExaminerSubmissionDetailAsync(Guid id)
+    {
+        return await GetAsync<SubmissionDetailDto>($"/api/examiner/submissions/{id}");
+    }
+
+    public async Task<bool> SubmitExaminerGradeAsync(Guid id, SubmitGradeRequest request)
+    {
+        await PostAsync<SubmitGradeRequest, object>($"/api/examiner/submissions/{id}/grade", request);
+        return true;
+    }
+
+    public async Task<PagedResult<DoubleGradingTaskDto>?> GetDoubleGradingTasksAsync(DoubleGradingFilter filter)
+    {
+        var queryParams = new List<string>
+        {
+            $"page={filter.PageNumber}",
+            $"pageSize={filter.PageSize}"
+        };
+
+        var queryString = string.Join("&", queryParams);
+        return await GetAsync<PagedResult<DoubleGradingTaskDto>>($"/api/examiner/double-grading?{queryString}");
+    }
+
+    public async Task<DoubleGradingDetailDto?> GetDoubleGradingDetailAsync(Guid id)
+    {
+        return await GetAsync<DoubleGradingDetailDto>($"/api/examiner/double-grading/{id}");
+    }
+
+    public async Task<bool> SubmitDoubleGradingAsync(Guid id, SubmitDoubleGradingRequest request)
+    {
+        await PostAsync<SubmitDoubleGradingRequest, object>($"/api/examiner/double-grading/{id}/grade", request);
+        return true;
+    }
 }

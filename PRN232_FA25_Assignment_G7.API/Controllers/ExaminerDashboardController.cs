@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PRN232_FA25_Assignment_G7.API.DTOs;
 using PRN232_FA25_Assignment_G7.Repositories;
+using PRN232_FA25_Assignment_G7.Services.DTOs;
 
 namespace PRN232_FA25_Assignment_G7.API.Controllers;
 
@@ -31,8 +32,8 @@ public class ExaminerDashboardController : ControllerBase
         var examiner = await _context.Examiners
             .FirstOrDefaultAsync(e => e.Email == user.Email, ct);
 
-        if (examiner == null) 
-            return Ok(new ExaminerDashboardResponse(0, 0, 0, new List<AssignedExamSummary>()));
+        if (examiner == null)
+            return Ok(new ExaminerDashboardResponse(0, 0, 0, 0, new List<AssignedExamSummary>(), new List<RecentActivityDto>()));
 
         var assignedExams = await _context.ExamExaminers
             .Include(ee => ee.Exam)
@@ -58,11 +59,30 @@ public class ExaminerDashboardController : ControllerBase
         var totalGraded = assignedExams
             .Sum(ee => ee.Exam!.Submissions.Count(s => s.GradedBy == Guid.Parse(userId) || s.SecondGradedBy == Guid.Parse(userId)));
 
+        var pendingDoubleGrading = await _context.Submissions
+            .CountAsync(s => s.SecondGradedBy == Guid.Parse(userId) && s.SecondGradedAt == null, ct);
+
+        // Recent activities (last 10 grading actions)
+        var recentActivities = await _context.Submissions
+            .Include(s => s.Exam)
+            .Where(s => s.GradedBy == Guid.Parse(userId) || s.SecondGradedBy == Guid.Parse(userId))
+            .OrderByDescending(s => s.GradedAt ?? s.SecondGradedAt)
+            .Take(10)
+            .Select(s => new RecentActivityDto(
+                s.Id,
+                s.GradedBy == Guid.Parse(userId) ? "Primary Graded" : "Double Graded",
+                s.Score,
+                s.GradedAt ?? s.SecondGradedAt ?? s.CreatedAt
+            ))
+            .ToListAsync(ct);
+
         var response = new ExaminerDashboardResponse(
             assignedExams.Count,
             totalPending,
             totalGraded,
-            examSummaries
+            pendingDoubleGrading,
+            examSummaries,
+            recentActivities
         );
 
         return Ok(response);

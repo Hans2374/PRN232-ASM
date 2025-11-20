@@ -21,13 +21,13 @@
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Student</th>
+                <th>Student Code</th>
                 <th>Exam</th>
                 <th>Submitted At</th>
                 <th>Status</th>
                 <th>Score</th>
                 <th>Second Score</th>
-                <th>Final Score</th>
+                <th>Violations</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -36,34 +36,34 @@
             {
                 <tr>
                     <td>@submission.Id</td>
-                    <td>@submission.StudentName</td>
-                    <td>@submission.ExamName</td>
-                    <td>@submission.SubmittedAt.ToString("g")</td>
+                    <td>@submission.StudentCode</td>
+                    <td>@submission.Exam?.Name</td>
+                    <td>@submission.CreatedAt.ToString("g")</td>
                     <td>
-                        @if (submission.Status == "Pending")
+                        @if (submission.SubmissionStatus == "Pending")
                         {
-                            <span class="badge bg-warning">@submission.Status</span>
+                            <span class="badge bg-warning">@submission.SubmissionStatus</span>
                         }
-                        else if (submission.Status == "Graded")
+                        else if (submission.SubmissionStatus == "Graded")
                         {
-                            <span class="badge bg-info">@submission.Status</span>
+                            <span class="badge bg-info">@submission.SubmissionStatus</span>
                         }
-                        else if (submission.Status == "DoubleGraded")
+                        else if (submission.SubmissionStatus == "DoubleGraded")
                         {
-                            <span class="badge bg-primary">@submission.Status</span>
+                            <span class="badge bg-primary">@submission.SubmissionStatus</span>
                         }
-                        else if (submission.Status == "Finalized")
+                        else if (submission.SubmissionStatus == "Finalized")
                         {
-                            <span class="badge bg-success">@submission.Status</span>
+                            <span class="badge bg-success">@submission.SubmissionStatus</span>
                         }
                         else
                         {
-                            <span class="badge bg-secondary">@submission.Status</span>
+                            <span class="badge bg-secondary">@submission.SubmissionStatus</span>
                         }
                     </td>
                     <td>@(submission.Score?.ToString("F2") ?? "-")</td>
                     <td>@(submission.SecondScore?.ToString("F2") ?? "-")</td>
-                    <td>@(submission.FinalScore?.ToString("F2") ?? "-")</td>
+                    <td>@submission.ViolationCount</td>
                     <td>
                         <a asp-page="./Details" asp-route-id="@submission.Id" class="btn btn-sm btn-info">View Details</a>
                     </td>
@@ -75,4 +75,45 @@
 else
 {
     <p class="text-muted">No submissions found.</p>
+}
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        let connection;
+
+        function startSignalR() {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl('/submissionHub')
+                .build();
+
+            connection.on('SubmissionUploaded', function (data) {
+                // Refresh the page or add the new submission
+                location.reload();
+            });
+
+            connection.on('ViolationFlagged', function (data) {
+                // Show toast or update the row
+                showToast('Violation flagged for submission ' + data.SubmissionId);
+            });
+
+            connection.start().catch(function (err) {
+                console.error(err.toString());
+            });
+        }
+
+        function showToast(message) {
+            // Simple toast
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-info position-fixed';
+            toast.style.top = '10px';
+            toast.style.right = '10px';
+            toast.style.zIndex = '9999';
+            toast.innerHTML = message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        document.addEventListener('DOMContentLoaded', startSignalR);
+    </script>
 }

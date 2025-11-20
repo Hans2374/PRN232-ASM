@@ -8,7 +8,8 @@ public enum ViolationReviewStatus
     ModeratorApproved = 1,
     ModeratorRejected = 2,
     AdminApproved = 3,
-    AdminRejected = 4
+    AdminRejected = 4,
+    Escalated = 5
 }
 
 public class Violation

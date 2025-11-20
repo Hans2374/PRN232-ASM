@@ -1,66 +1,50 @@
-using System;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using PRN232_FA25_Assignment_G7.RazorPages.Services;
+using PRN232_FA25_Assignment_G7.RazorPages.Models;
 
-namespace PRN232_FA25_Assignment_G7.RazorPages.Pages.Examiner
+namespace PRN232_FA25_Assignment_G7.RazorPages.Pages.Examiner;
+
+[Authorize(Roles = "Examiner")]
+public class DashboardModel : PageModel
 {
-    [Authorize(Roles = "Examiner")]
-    public class DashboardModel : PageModel
+    private readonly ApiClient _apiClient;
+    private readonly AuthSession _authSession;
+    private readonly ILogger<DashboardModel> _logger;
+
+    public DashboardModel(ApiClient apiClient, AuthSession authSession, ILogger<DashboardModel> logger)
     {
-        private readonly ApiClient _apiClient;
+        _apiClient = apiClient;
+        _authSession = authSession;
+        _logger = logger;
+    }
 
-        public DashboardModel(ApiClient apiClient)
+    public ExaminerDashboardResponse? Dashboard { get; set; }
+    public string? ErrorMessage { get; set; }
+
+    public async Task<IActionResult> OnGetAsync()
+    {
+        if (!_authSession.IsInRole(HttpContext, "Examiner"))
         {
-            _apiClient = apiClient;
+            return RedirectToPage("/Account/Login");
         }
 
-
-        public ExaminerDashboardResponse? Data { get; set; }
-
-        public class ExaminerDashboardResponse
+        try
         {
-            public int AssignedExamsCount { get; set; }
-            public int PendingSubmissionsCount { get; set; }
-            public int GradedSubmissionsCount { get; set; }
-            public List<AssignedExamSummary> AssignedExams { get; set; } = new();
+            Dashboard = await _apiClient.GetExaminerDashboardAsync();
+            return Page();
         }
-
-        public class AssignedExamSummary
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
-            public Guid ExamId { get; set; }
-            public string ExamName { get; set; } = string.Empty;
-            public string SubjectName { get; set; } = string.Empty;
-            public DateTime ExamDate { get; set; }
-            public int TotalSubmissions { get; set; }
-            public int GradedSubmissions { get; set; }
-            public bool IsPrimaryGrader { get; set; }
+            _logger.LogWarning("Unauthorized access to examiner dashboard");
+            return RedirectToPage("/Account/Login");
         }
-
-        public async Task<IActionResult> OnGetAsync()
+        catch (Exception ex)
         {
-            try
-            {
-                Data = await _apiClient.GetAsync<ExaminerDashboardResponse>("/api/examiner/dashboard");
-                return Page();
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                // API returned 401 or 403 (handled by ApiClient as UnauthorizedAccessException)
-                TempData["AuthError"] = ex.Message;
-                return Page();
-            }
-            catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-            {
-                return RedirectToPage("/Account/Login");
-            }
-            catch (ApiException)
-            {
-                TempData["Error"] = "Cannot reach API";
-                return Page();
-            }
+            _logger.LogError(ex, "Error loading examiner dashboard");
+            ErrorMessage = "Unable to load dashboard data. Please try again later.";
+            return Page();
         }
     }
 }

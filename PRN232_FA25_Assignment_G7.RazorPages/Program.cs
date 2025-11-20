@@ -24,6 +24,7 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
     options.AddPolicy("ManagerOnly", policy => policy.RequireRole("Manager"));
+    options.AddPolicy("ModeratorOnly", policy => policy.RequireRole("Moderator"));
     options.AddPolicy("ExaminerOnly", policy => policy.RequireRole("Examiner"));
     options.AddPolicy("AdminOrManager", policy => policy.RequireRole("Admin", "Manager"));
 });

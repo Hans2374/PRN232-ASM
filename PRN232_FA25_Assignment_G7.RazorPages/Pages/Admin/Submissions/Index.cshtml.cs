@@ -19,22 +19,32 @@ namespace PRN232_FA25_Assignment_G7.RazorPages.Pages.Admin.Submissions
 
         public class SubmissionItem
         {
-            public int Id { get; set; }
-            public string StudentName { get; set; } = string.Empty;
-            public string ExamName { get; set; } = string.Empty;
-            public DateTime SubmittedAt { get; set; }
-            public string Status { get; set; } = string.Empty;
+            public Guid Id { get; set; }
+            public string StudentCode { get; set; } = string.Empty;
+            public ExamItem? Exam { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public string SubmissionStatus { get; set; } = string.Empty;
             public decimal? Score { get; set; }
             public decimal? SecondScore { get; set; }
-            public decimal? FinalScore { get; set; }
+            public int ViolationCount { get; set; }
+        }
+
+        public class ExamItem
+        {
+            public string Name { get; set; } = string.Empty;
+        }
+
+        public class ODataResponse<T>
+        {
+            public List<T> Value { get; set; } = new();
         }
 
         public async Task<IActionResult> OnGetAsync()
         {
             try
             {
-                var submissions = await _apiClient.GetAsync<List<SubmissionItem>>("/api/submissions");
-                Submissions = submissions ?? new List<SubmissionItem>();
+                var response = await _apiClient.GetAsync<ODataResponse<SubmissionItem>>("/odata/Submissions?$expand=Exam&$orderby=CreatedAt desc&$top=50");
+                Submissions = response?.Value ?? new List<SubmissionItem>();
                 return Page();
             }
             catch (UnauthorizedAccessException)

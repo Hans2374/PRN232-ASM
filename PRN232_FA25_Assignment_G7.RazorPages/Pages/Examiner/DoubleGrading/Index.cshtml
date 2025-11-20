@@ -1,0 +1,128 @@
+@page
+@model PRN232_FA25_Assignment_G7.RazorPages.Pages.Examiner.DoubleGrading.IndexModel
+@{
+    ViewData["Title"] = "Double Grading Tasks";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-users"></i> Double Grading Tasks</h4>
+            </div>
+            <div class="card-body">
+                @if (Model.ErrorMessage != null)
+                {
+                    <div class="alert alert-danger">
+                        @Model.ErrorMessage
+                    </div>
+                }
+                else if (Model.Tasks != null && Model.Tasks.Items.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Exam</th>
+                                    <th>Primary Score</th>
+                                    <th>Assigned</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var task in Model.Tasks.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@task.StudentName</strong><br>
+                                            <small class="text-muted">@task.StudentCode</small>
+                                        </td>
+                                        <td>@task.ExamName</td>
+                                        <td>
+                                            @if (task.PrimaryScore.HasValue)
+                                            {
+                                                <span class="badge badge-info">@task.PrimaryScore</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">N/A</span>
+                                            }
+                                        </td>
+                                        <td>@task.AssignedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>
+                                            @if (task.SecondaryScore.HasValue)
+                                            {
+                                                <span class="badge badge-success">Completed</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-warning">Pending</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!task.SecondaryScore.HasValue)
+                                            {
+                                                <a href="/Examiner/DoubleGrading/Grade?id=@task.SubmissionId" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-edit"></i> Grade
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a href="/Examiner/DoubleGrading/Grade?id=@task.SubmissionId" class="btn btn-sm btn-secondary">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    @if (Model.Tasks.TotalPages > 1)
+                    {
+                        <nav aria-label="Double grading pagination">
+                            <ul class="pagination justify-content-center">
+                                @if (Model.Tasks.HasPreviousPage)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=@(Model.Tasks.PageNumber - 1)">
+                                            Previous
+                                        </a>
+                                    </li>
+                                }
+
+                                @for (int i = Math.Max(1, Model.Tasks.PageNumber - 2); i <= Math.Min(Model.Tasks.TotalPages, Model.Tasks.PageNumber + 2); i++)
+                                {
+                                    <li class="page-item @(i == Model.Tasks.PageNumber ? "active" : "")">
+                                        <a class="page-link" href="?page=@i">@i</a>
+                                    </li>
+                                }
+
+                                @if (Model.Tasks.HasNextPage)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=@(Model.Tasks.PageNumber + 1)">
+                                            Next
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </nav>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5>No double grading tasks</h5>
+                        <p class="text-muted">You don't have any submissions assigned for double grading at this time.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

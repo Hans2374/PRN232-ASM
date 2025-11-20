@@ -50,4 +50,5 @@ public class Submission
 
     public Exam? Exam { get; set; }
     public ICollection<Violation> Violations { get; set; } = new List<Violation>();
+    public ICollection<Complaint> Complaints { get; set; } = new List<Complaint>();
 }

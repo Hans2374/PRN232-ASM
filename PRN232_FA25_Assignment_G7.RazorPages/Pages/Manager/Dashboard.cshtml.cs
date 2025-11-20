@@ -5,7 +5,7 @@ using PRN232_FA25_Assignment_G7.RazorPages.Services;
 
 namespace PRN232_FA25_Assignment_G7.RazorPages.Pages.Manager
 {
-    [Authorize]
+    [Authorize(Roles = "Manager")]
     public class DashboardModel : PageModel
     {
         private readonly ApiClient _apiClient;
@@ -21,22 +21,26 @@ namespace PRN232_FA25_Assignment_G7.RazorPages.Pages.Manager
 
         public class ManagerDashboardData
         {
-            public int TotalExaminers { get; set; }
             public int TotalExams { get; set; }
+            public int TotalExaminers { get; set; }
             public int TotalSubmissions { get; set; }
-            public int PendingReviews { get; set; }
-            public int GradingProgress { get; set; }
-            public int SubmissionsAwaitingReview { get; set; }
-            public int ViolationReports { get; set; }
+            public int GradedSubmissions { get; set; }
+            public int PendingSubmissions { get; set; }
+            public int DoubleGradeRequired { get; set; }
+            public int ViolationsPending { get; set; }
+            public List<ExamProgress> ExamsProgress { get; set; } = new();
+        }
+
+        public class ExamProgress
+        {
+            public Guid ExamId { get; set; }
+            public string ExamName { get; set; } = string.Empty;
+            public int Graded { get; set; }
+            public int Pending { get; set; }
         }
 
         public async Task<IActionResult> OnGetAsync()
         {
-            if (!_authSession.IsInRole(HttpContext, "Manager"))
-            {
-                return RedirectToPage("/Account/Login");
-            }
-
             try
             {
                 Data = await _apiClient.GetAsync<ManagerDashboardData>("/api/manager/dashboard");

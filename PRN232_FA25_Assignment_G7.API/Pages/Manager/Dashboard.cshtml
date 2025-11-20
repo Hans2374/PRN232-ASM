@@ -1,0 +1,145 @@
+@page
+@model PRN232_FA25_Assignment_G7.API.Pages.Manager.DashboardModel
+@{
+    ViewData["Title"] = "Manager Dashboard";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">Manager Dashboard</h1>
+        </div>
+    </div>
+
+    <div class="row" id="dashboard-stats">
+        <!-- Stats will be loaded here -->
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Exam Grading Progress</h5>
+                </div>
+                <div class="card-body">
+                    <div id="exam-progress">
+                        <!-- Progress will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/signalr/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl('/submissionHub')
+            .build();
+
+        connection.on('SubmissionUpdated', function (data) {
+            loadDashboard();
+        });
+
+        connection.start().catch(function (err) {
+            return console.error(err.toString());
+        });
+
+        function loadDashboard() {
+            fetch('/api/manager/dashboard')
+                .then(response => response.json())
+                .then(data => {
+                    updateStats(data);
+                    updateProgress(data.examProgress);
+                })
+                .catch(error => console.error('Error loading dashboard:', error));
+        }
+
+        function updateStats(data) {
+            const statsHtml = `
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Examiners</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">${data.totalExaminers}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-users fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Exams</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">${data.totalExams}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Pending Grading</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">${data.pendingGradingCount}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-clock fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Violations</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">${data.pendingViolations}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('dashboard-stats').innerHTML = statsHtml;
+        }
+
+        function updateProgress(progress) {
+            const progressHtml = progress.map(exam => `
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>${exam.examName}</span>
+                        <span>${exam.gradedCount}/${exam.totalSubmissions}</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: ${exam.progressPercentage}%"
+                             aria-valuenow="${exam.progressPercentage}" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('exam-progress').innerHTML = progressHtml;
+        }
+
+        // Load dashboard on page load
+        loadDashboard();
+    </script>
+}

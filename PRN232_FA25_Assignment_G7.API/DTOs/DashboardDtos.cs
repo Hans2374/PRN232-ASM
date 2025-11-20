@@ -23,38 +23,43 @@ public record RecentSubmissionSummary(
 
 // Manager Dashboard DTOs
 public record ManagerDashboardResponse(
-    int TotalExaminers,
     int TotalExams,
-    int PendingGradingCount,
-    int GradedCount,
-    int PendingViolations,
-    List<ExamGradingProgress> ExamProgress
-);
-
-public record ExamGradingProgress(
-    Guid ExamId,
-    string ExamName,
+    int TotalExaminers,
     int TotalSubmissions,
     int GradedSubmissions,
-    decimal CompletionPercentage
+    int PendingSubmissions,
+    int DoubleGradeRequired,
+    int ViolationsPending,
+    List<ExamProgress> ExamsProgress
+);
+
+public record ExamProgress(
+    Guid ExamId,
+    string ExamName,
+    int Graded,
+    int Pending
 );
 
 // Moderator Dashboard DTOs
 public record ModeratorDashboardResponse(
-    int PendingViolationReviews,
-    int ZeroScoreViolations,
-    int ResolvedViolations,
-    List<PendingViolationSummary> PendingViolations
+    int TotalExamsUnderReview,
+    int TotalPendingComplaints,
+    int TotalZeroScoreSubmissionsPending,
+    List<ExamDiscrepancyDto> RecentDiscrepancies,
+    List<TopIssueDto> TopIssues
 );
 
-public record PendingViolationSummary(
-    Guid Id,
+public record ExamDiscrepancyDto(
     Guid SubmissionId,
-    string StudentCode,
-    string ViolationType,
-    int Severity,
-    bool IsZeroScore,
-    DateTime CreatedAt
+    string ExamName,
+    decimal ExaminerScore,
+    decimal OtherScore,
+    decimal Difference
+);
+
+public record TopIssueDto(
+    string Type,
+    int Count
 );
 
 // Examiner Dashboard DTOs
@@ -62,7 +67,9 @@ public record ExaminerDashboardResponse(
     int AssignedExamsCount,
     int PendingSubmissionsCount,
     int GradedSubmissionsCount,
-    List<AssignedExamSummary> AssignedExams
+    int PendingDoubleGradingCount,
+    List<AssignedExamSummary> AssignedExams,
+    List<RecentActivityDto> RecentActivities
 );
 
 public record AssignedExamSummary(
@@ -73,4 +80,11 @@ public record AssignedExamSummary(
     int TotalSubmissions,
     int GradedSubmissions,
     bool IsPrimaryGrader
+);
+
+public record RecentActivityDto(
+    Guid SubmissionId,
+    string Status,
+    decimal? Score,
+    DateTime Time
 );

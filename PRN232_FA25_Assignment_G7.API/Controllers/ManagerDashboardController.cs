@@ -28,29 +28,32 @@ public class ManagerDashboardController : ControllerBase
             .CountAsync(s => s.SubmissionStatus == SubmissionStatus.Pending, ct);
         var graded = await _context.Submissions
             .CountAsync(s => s.SubmissionStatus >= SubmissionStatus.Graded, ct);
+        var totalSubmissions = pendingGrading + graded;
         var pendingViolations = await _context.Violations
             .CountAsync(v => v.ReviewStatus == ViolationReviewStatus.Pending, ct);
+
+        // For double grade required, assume some logic, for now 0
+        var doubleGradeRequired = 0;
 
         var exams = await _context.Exams
             .Include(e => e.Submissions)
             .Take(10)
             .ToListAsync(ct);
 
-        var progress = exams.Select(e => new ExamGradingProgress(
+        var progress = exams.Select(e => new ExamProgress(
             e.Id,
             e.Name,
-            e.Submissions.Count,
             e.Submissions.Count(s => s.SubmissionStatus >= SubmissionStatus.Graded),
-            e.Submissions.Count > 0 
-                ? (decimal)e.Submissions.Count(s => s.SubmissionStatus >= SubmissionStatus.Graded) / e.Submissions.Count * 100 
-                : 0
+            e.Submissions.Count(s => s.SubmissionStatus == SubmissionStatus.Pending)
         )).ToList();
 
         var response = new ManagerDashboardResponse(
-            totalExaminers,
             totalExams,
-            pendingGrading,
+            totalExaminers,
+            totalSubmissions,
             graded,
+            pendingGrading,
+            doubleGradeRequired,
             pendingViolations,
             progress
         );
@@ -59,20 +62,17 @@ public class ManagerDashboardController : ControllerBase
     }
 
     [HttpGet("grading-progress")]
-    public async Task<ActionResult<List<ExamGradingProgress>>> GetGradingProgress(CancellationToken ct)
+    public async Task<ActionResult<List<ExamProgress>>> GetGradingProgress(CancellationToken ct)
     {
         var exams = await _context.Exams
             .Include(e => e.Submissions)
             .ToListAsync(ct);
 
-        var progress = exams.Select(e => new ExamGradingProgress(
+        var progress = exams.Select(e => new ExamProgress(
             e.Id,
             e.Name,
-            e.Submissions.Count,
             e.Submissions.Count(s => s.SubmissionStatus >= SubmissionStatus.Graded),
-            e.Submissions.Count > 0 
-                ? (decimal)e.Submissions.Count(s => s.SubmissionStatus >= SubmissionStatus.Graded) / e.Submissions.Count * 100 
-                : 0
+            e.Submissions.Count(s => s.SubmissionStatus == SubmissionStatus.Pending)
         )).ToList();
 
         return Ok(progress);
@@ -97,27 +97,6 @@ public class ManagerDashboardController : ControllerBase
             s.Score,
             s.CreatedAt,
             s.Violations.Count
-        )).ToList();
-
-        return Ok(response);
-    }
-
-    [HttpGet("violations")]
-    public async Task<ActionResult<IReadOnlyList<ViolationResponse>>> GetViolations(CancellationToken ct)
-    {
-        var violations = await _context.Violations
-            .Include(v => v.Submission)
-            .OrderByDescending(v => v.CreatedAt)
-            .ToListAsync(ct);
-
-        var response = violations.Select(v => new ViolationResponse(
-            v.Id,
-            v.SubmissionId,
-            v.Submission?.StudentCode ?? string.Empty,
-            v.Type,
-            v.Description,
-            v.Severity,
-            v.IsZeroScore
         )).ToList();
 
         return Ok(response);

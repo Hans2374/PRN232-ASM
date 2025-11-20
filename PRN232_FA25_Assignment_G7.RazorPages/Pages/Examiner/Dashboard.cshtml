@@ -4,47 +4,168 @@
     ViewData["Title"] = "Examiner Dashboard";
 }
 
-<h1>@ViewData["Title"]</h1>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-tachometer-alt"></i> Examiner Dashboard</h4>
+            </div>
+            <div class="card-body">
+                @if (Model.ErrorMessage != null)
+                {
+                    <div class="alert alert-danger">
+                        @Model.ErrorMessage
+                    </div>
+                }
+                else if (Model.Dashboard != null)
+                {
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">@Model.Dashboard.AssignedExamsCount</h5>
+                                    <p class="card-text">Assigned Exams</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">@Model.Dashboard.PendingSubmissionsCount</h5>
+                                    <p class="card-text">Pending Submissions</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">@Model.Dashboard.GradedSubmissionsCount</h5>
+                                    <p class="card-text">Graded Submissions</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">@Model.Dashboard.PendingDoubleGradingCount</h5>
+                                    <p class="card-text">Double Grading Tasks</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
-}
+                    <!-- Assigned Exams -->
+                    <div class="mb-4">
+                        <h5>Assigned Exams</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Exam Name</th>
+                                        <th>Subject</th>
+                                        <th>Exam Date</th>
+                                        <th>Total Submissions</th>
+                                        <th>Graded</th>
+                                        <th>Progress</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var exam in Model.Dashboard.AssignedExams)
+                                    {
+                                        <tr>
+                                            <td>@exam.ExamName</td>
+                                            <td>@exam.SubjectName</td>
+                                            <td>@exam.ExamDate.ToString("dd/MM/yyyy")</td>
+                                            <td>@exam.TotalSubmissions</td>
+                                            <td>@exam.GradedSubmissions</td>
+                                            <td>
+                                                <div class="progress">
+                                                    <div class="progress-bar" role="progressbar"
+                                                         style="width: @(exam.TotalSubmissions > 0 ? (exam.GradedSubmissions * 100 / exam.TotalSubmissions) : 0)%"
+                                                         aria-valuenow="@exam.GradedSubmissions"
+                                                         aria-valuemin="0"
+                                                         aria-valuemax="@exam.TotalSubmissions">
+                                                        @(exam.TotalSubmissions > 0 ? $"{exam.GradedSubmissions * 100 / exam.TotalSubmissions}%" : "0%")
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a href="/Examiner/Submissions/Index?examId=@exam.ExamId" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-list"></i> View Submissions
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-@if (Model.Data != null)
-{
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card text-bg-primary mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Assigned Exams</h5>
-                    <p class="card-text fs-2">@Model.Data.AssignedExamsCount</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-bg-warning mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Submissions to Grade</h5>
-                    <p class="card-text fs-2">@Model.Data.PendingSubmissionsCount</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-bg-info mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Double Grading Required</h5>
-                    <p class="card-text fs-2">@Model.Data.GradedSubmissionsCount</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-bg-success mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">History</h5>
-                    <p class="card-text fs-2">@Model.Data.AssignedExams?.Count()</p>
-                </div>
+                    <!-- Recent Activities -->
+                    @if (Model.Dashboard.RecentActivities.Any())
+                    {
+                        <div class="mb-4">
+                            <h5>Recent Activities</h5>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Submission</th>
+                                            <th>Status</th>
+                                            <th>Score</th>
+                                            <th>Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var activity in Model.Dashboard.RecentActivities)
+                                        {
+                                            <tr>
+                                                <td>@activity.SubmissionId</td>
+                                                <td>
+                                                    <span class="badge badge-success">@activity.Status</span>
+                                                </td>
+                                                <td>@activity.Score</td>
+                                                <td>@activity.Time.ToString("dd/MM/yyyy HH:mm")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Quick Actions -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <a href="/Examiner/Submissions/Index" class="btn btn-primary btn-lg btn-block">
+                                <i class="fas fa-graduation-cap"></i> Start Grading
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="/Examiner/DoubleGrading/Index" class="btn btn-secondary btn-lg btn-block">
+                                <i class="fas fa-users"></i> Double Grading Tasks
+                            </a>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        Loading dashboard data...
+                    </div>
+                }
             </div>
         </div>
     </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-refresh dashboard every 30 seconds
+        setInterval(function() {
+            location.reload();
+        }, 30000);
+    </script>
 }

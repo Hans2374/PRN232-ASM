@@ -22,6 +22,63 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Complaint", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("EvidencePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ReviewComments")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReviewedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("StudentCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("SubmissionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewedBy");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.ToTable("Complaints", (string)null);
+                });
+
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Exam", b =>
                 {
                     b.Property<Guid>("Id")
@@ -316,9 +373,20 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                             Email = "admin@example.com",
                             FullName = "System Administrator",
                             IsActive = true,
-                            PasswordHash = "$2a$11$NN7s91WhpREHokf0kwgo7.mIMf4DcwyHamCktzPzrlDFbgGI0Cmny",
+                            PasswordHash = "$2a$11$hc459wRTrKyZ3IwOW0WF0.2S4Ngtv.PlcchU1owZcHr4XSvN2muyq",
                             Role = 1,
                             Username = "admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e"),
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "moderator@example.com",
+                            FullName = "Content Moderator",
+                            IsActive = true,
+                            PasswordHash = "$2a$11$6QfirpMoyH7S92rhq/yqDOK2bUn8MM0XkgabPAMlt.xwAug5v7PHO",
+                            Role = 3,
+                            Username = "moderator"
                         });
                 });
 
@@ -372,6 +440,24 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
                     b.HasIndex("SubmissionId");
 
                     b.ToTable("Violations", (string)null);
+                });
+
+            modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Complaint", b =>
+                {
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.User", "Reviewer")
+                        .WithMany()
+                        .HasForeignKey("ReviewedBy")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("PRN232_FA25_Assignment_G7.Repositories.Entities.Submission", "Submission")
+                        .WithMany("Complaints")
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Reviewer");
+
+                    b.Navigation("Submission");
                 });
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Exam", b =>
@@ -494,6 +580,8 @@ namespace PRN232_FA25_Assignment_G7.Repositories.Migrations
 
             modelBuilder.Entity("PRN232_FA25_Assignment_G7.Repositories.Entities.Submission", b =>
                 {
+                    b.Navigation("Complaints");
+
                     b.Navigation("Violations");
                 });
 #pragma warning restore 612, 618

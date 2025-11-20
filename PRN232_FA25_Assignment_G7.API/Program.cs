@@ -22,6 +22,15 @@ builder.Services.AddSwaggerConfiguration();
 // Authentication & Authorization
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
+// Add role-based authorization policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("ManagerOnly", policy => policy.RequireRole("Manager"));
+    options.AddPolicy("ModeratorOnly", policy => policy.RequireRole("Moderator"));
+    options.AddPolicy("ExaminerOnly", policy => policy.RequireRole("Examiner"));
+});
+
 // Application services (Repositories + Services + AutoMapper)
 builder.Services.AddApplicationServices(builder.Configuration);
 

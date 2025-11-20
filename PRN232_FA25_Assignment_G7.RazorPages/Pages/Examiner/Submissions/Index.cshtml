@@ -1,60 +1,190 @@
-@page ""
+@page
 @model PRN232_FA25_Assignment_G7.RazorPages.Pages.Examiner.Submissions.IndexModel
 @{
-    ViewData["Title"] = "Examiner - Submissions";
+    ViewData["Title"] = "Submissions to Grade";
 }
 
-<h1>@ViewData["Title"]</h1>
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4><i class="fas fa-graduation-cap"></i> Submissions to Grade</h4>
+                <div>
+                    <select id="examFilter" class="form-select form-select-sm" style="width: auto; display: inline-block;">
+                        <option value="">All Exams</option>
+                        @if (Model.AvailableExams != null)
+                        {
+                            @foreach (var exam in Model.AvailableExams)
+                            {
+                                <option value="@exam.ExamId" selected="@(Model.ExamId == exam.ExamId)">
+                                    @exam.ExamName (@exam.SubjectName)
+                                </option>
+                            }
+                        }
+                    </select>
+                    <select id="statusFilter" class="form-select form-select-sm ms-2" style="width: auto; display: inline-block;">
+                        <option value="Pending" selected="@(Model.Status == "Pending")">Pending</option>
+                        <option value="Completed" selected="@(Model.Status == "Completed")">Completed</option>
+                        <option value="All" selected="@(Model.Status == "All")">All</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                @if (Model.ErrorMessage != null)
+                {
+                    <div class="alert alert-danger">
+                        @Model.ErrorMessage
+                    </div>
+                }
+                else if (Model.Submissions != null && Model.Submissions.Items.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Exam</th>
+                                    <th>Submitted</th>
+                                    <th>Violations</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var submission in Model.Submissions.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@submission.StudentName</strong><br>
+                                            <small class="text-muted">@submission.StudentCode</small>
+                                        </td>
+                                        <td>@submission.ExamName</td>
+                                        <td>@submission.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>
+                                            @if (submission.ViolationsCount > 0)
+                                            {
+                                                <span class="badge badge-danger">
+                                                    @submission.ViolationsCount violation(s)
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-success">Clean</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (submission.Score.HasValue)
+                                            {
+                                                <span class="badge badge-success">Graded (@submission.Score)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-warning">Pending</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!submission.Score.HasValue)
+                                            {
+                                                <a href="/Examiner/Submissions/Grade?id=@submission.Id" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-edit"></i> Grade
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a href="/Examiner/Submissions/Grade?id=@submission.Id" class="btn btn-sm btn-secondary">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
 
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
-}
-@if (TempData["AuthError"] != null)
-{
-    <div class="alert alert-error">@TempData["AuthError"]</div>
-}
-
-@if (Model.ExamId == null)
-{
-    <div class="alert alert-warning">No exam selected. Navigate from the Exams page to view submissions.</div>
-}
-else if (Model.Data == null || !Model.Data.Any())
-{
-    <div class="alert alert-info">No submissions found for this exam.</div>
-}
-else
-{
-    <table>
-        <thead>
-            <tr>
-                <th>Student</th>
-                <th>Submitted At</th>
-                <th>Status</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var s in Model.Data)
-        {
-            <tr>
-                <td>@s.StudentCode</td>
-                <td>@s.SubmittedAt.ToString("g")</td>
-                <td>@s.Status</td>
-                <td>
-                    <a asp-page="/Examiner/Submissions/View" asp-route-id="@s.Id" class="btn btn-primary btn-sm">View</a>
-                    @if (s.Status == "Pending")
+                    <!-- Pagination -->
+                    @if (Model.Submissions.TotalPages > 1)
                     {
-                        <a asp-page="/Examiner/Submissions/Grade" asp-route-id="@s.Id" class="btn btn-success btn-sm">Grade</a>
+                        <nav aria-label="Submissions pagination">
+                            <ul class="pagination justify-content-center">
+                                @if (Model.Submissions.HasPreviousPage)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=@(Model.Submissions.PageNumber - 1)&examId=@Model.ExamId&status=@Model.Status">
+                                            Previous
+                                        </a>
+                                    </li>
+                                }
+
+                                @for (int i = Math.Max(1, Model.Submissions.PageNumber - 2); i <= Math.Min(Model.Submissions.TotalPages, Model.Submissions.PageNumber + 2); i++)
+                                {
+                                    <li class="page-item @(i == Model.Submissions.PageNumber ? "active" : "")">
+                                        <a class="page-link" href="?page=@i&examId=@Model.ExamId&status=@Model.Status">@i</a>
+                                    </li>
+                                }
+
+                                @if (Model.Submissions.HasNextPage)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=@(Model.Submissions.PageNumber + 1)&examId=@Model.ExamId&status=@Model.Status">
+                                            Next
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </nav>
                     }
-                    @if (s.Status == "Double Grade Required")
-                    {
-                        <a asp-page="/Examiner/Submissions/DoubleGrade" asp-route-id="@s.Id" class="btn btn-warning btn-sm">Double Grade</a>
-                    }
-                    <a asp-page="/Examiner/Violations/Flag" asp-route-submissionId="@s.Id" class="btn btn-danger btn-sm">Flag Violation</a>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5>No submissions found</h5>
+                        <p class="text-muted">
+                            @if (Model.ExamId.HasValue)
+                            {
+                                <text>No submissions found for the selected exam.</text>
+                            }
+                            else
+                            {
+                                <text>You don't have any submissions assigned for grading yet.</text>
+                            }
+                        </p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('examFilter').addEventListener('change', function() {
+            const examId = this.value;
+            const status = document.getElementById('statusFilter').value;
+            const url = new URL(window.location);
+            if (examId) {
+                url.searchParams.set('examId', examId);
+            } else {
+                url.searchParams.delete('examId');
+            }
+            url.searchParams.set('status', status);
+            url.searchParams.set('page', '1');
+            window.location.href = url.toString();
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', function() {
+            const examId = document.getElementById('examFilter').value;
+            const status = this.value;
+            const url = new URL(window.location);
+            if (examId) {
+                url.searchParams.set('examId', examId);
+            } else {
+                url.searchParams.delete('examId');
+            }
+            url.searchParams.set('status', status);
+            url.searchParams.set('page', '1');
+            window.location.href = url.toString();
+        });
+    </script>
 }
