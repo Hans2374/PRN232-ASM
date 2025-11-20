@@ -52,11 +52,12 @@ public class ReportsController : ControllerBase
             worksheet.Cell(i + 2, 6).Value = sub.Violations.Count;
         }
 
-        using var stream = new MemoryStream();
-        workbook.SaveAs(stream);
-        stream.Position = 0;
+        var ms = new MemoryStream();
+        workbook.SaveAs(ms);
+        var bytes = ms.ToArray();
+        ms.Dispose();
 
-        return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"Exam_{exam.Name}_Results.xlsx");
+        return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"Exam_{exam.Name}_Results.xlsx");
     }
 
     [HttpGet("violations/export")]
@@ -89,10 +90,11 @@ public class ReportsController : ControllerBase
             worksheet.Cell(i + 2, 6).Value = v.Status.ToString();
         }
 
-        using var stream = new MemoryStream();
-        workbook.SaveAs(stream);
-        stream.Position = 0;
+        var ms = new MemoryStream();
+        workbook.SaveAs(ms);
+        var bytes = ms.ToArray();
+        ms.Dispose();
 
-        return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Violations_Report.xlsx");
+        return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Violations_Report.xlsx");
     }
 }
